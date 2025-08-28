@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Make 10!</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" type="image/png" href="images/icon.png">
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+</head>
+<body>
+  <!-- Leaderboard (left-center box) -->
+  <div id="leaderboard" aria-hidden="false">
+    <h3>🏆 Leaderboard</h3>
+    <div id="leaderboardContents">
+      <div id="lbBest">⭐ Highest correct answers: 0</div>
+      <div id="lbStreak">🔥 Best streak: 0</div>
+      <hr style="margin:10px 0;opacity:.6"/>
+      <div style="font-size:14px;">Recent top streaks:</div>
+      <ol id="topList" style="padding-left:18px;margin-top:6px"></ol>
+    </div>
+  </div>
+
+  <!-- Mode selection (initial) -->
+  <div id="modeScreen">
+    <h2>Select game mode</h2>
+    <p style="font-size:16px;color:#333;margin-bottom:18px">Choose how you'd like to play Make 10!</p>
+    <button class="modeBtn" onclick="startGame('arrangeable')">Arrangeable (drag numbers & brackets)</button>
+    <button class="modeBtn secondary" onclick="startGame('fixed')">Not Arrangeable (fixed — classic)</button>
+    <p style="margin-top:18px;font-size:14px;color:#333">(Arrangeable allows rearranging numbers & brackets; Not Arrangeable uses dropdown operators)</p>
+  </div>
+
+  <!-- Game area -->
+  <div id="game" style="display:none">
+    <h1>✨ Make 10! ✨</h1>
+    <div id="bigNumber">----</div>
+
+    <div id="equationWrapper">
+      <div id="equation" ondragover="allowDrop(event)" ondrop="dropOnEquation(event)"></div>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="submitBtn" onclick="onSubmit()">Submit</button>
+      <button class="btn hint" id="hintBtn" onclick="onHint()">Hint 💡</button>
+    </div>
+
+    <div class="smallNote">(BODMAS used)</div>
+
+    <div id="hints"></div>
+
+    <div id="stats">
+      <div id="score">✅ Correct answers: 0</div>
+      <div id="streak">🔥 Current streak: 0</div>
+      <div id="attempts">📊 Total attempts: 0</div>
+      <div id="incorrect">❌ Incorrect answers: 0</div>
+    </div>
+  </div>
+
+  <!-- Bracket box (only visible/useful in arrangeable mode) -->
+  <div id="bracketBox" style="display:none" ondragover="allowDrop(event)" ondrop="dropRemoveOrBracket(event)">
+    <div class="dropHint">Drag brackets here to remove them from equation</div>
+    <div class="dragItem" draggable="true" ondragstart="dragFromBracket(event)" data-symbol="(">(</div>
+    <div class="dragItem" draggable="true" ondragstart="dragFromBracket(event)" data-symbol=")">)</div>
+  </div>
+
+<script>
+/* -----------------------------
+  Core state & helpers
+   - Modes: "fixed" or "arrangeable"
+   - Tokens: elements inside #equation
+   - In fixed mode: tokens are numbers & select dropdowns for operators
+   - In arrangeable mode: tokens are spans (num/op/paren) draggable
+--------------------------------*/
+let mode = null;
+let digits = [];          // current 4 digits (array of numbers)
+let solutions = [];       // array of string expressions that evaluate to 10
+let hintStep = 0;         // how many operator hints have been shown
+let attempts = 0, correct = 0, incorrect = 0, streakCnt = 0;
+let bestScore = Number(localStorage.getItem('bestScore')||0);
+let bestStreak = Number(localStorage.getItem('bestStreak')||0);
+let leaderboard = JSON.parse(localStorage.getItem('leaderboard')||'[]'); // top streaks array
+const opsReadable = {'+':'+','-':'-','*':'×','/':'÷'};
+
+const eq = document.getElementById('equation');
+const bigN = document.getElementById('bigNumber');
+const hintBtn = document.getElementById('hintBtn');
+const hintsDiv = document.getElementById('hints');
+const lbBest = document.getElementById('lbBest'), lbStreak = document.getElementById('lbStreak');
+const topList = document.getElementById('topList');
+
+function startGame(selectedMode){
+  mode = selectedMode;
+  document.getElementById('modeScreen').style.display = 'none';
+  document.getElementById('game').style.display = 'block';
+  document.getElementById('bracketBox').style.display = (mode==='arrangeable') ? 'block' : 'none';
+  resetStatsIfNeeded();
+  updateLeaderboardBox();
+  newSolvablePuzzle();
+}
+
+/* reset stats? keep persistent across session — keep as is */
+function resetStatsIfNeeded(){ /* nothing here for now */ }
+
+/* ---------------------------
+  Puzzle generation & solver
+  - For fixed mode: only consider operators with fixed order (no rearrange)
+  - For arrangeable mode: consider permutations + operator combos + parentheses shapes
+---------------------------*/
+
+function newSolvablePuzzle(){
+  // keep trying random digits until at least one solution is found
+  do {
+    digits = [];
+    for(let i=0;i<4;i++) digits.push(Math.floor(Math.random()*9)+1); // 1-9
+    solutions = findSolutionsForMode(digits, mode);
+  } while(solutions.length===0);
+  hintStep = 0;
+  hintBtn.disabled = false; hintBtn.style.background=''; hintBtn.style.cursor='';
+  hintsDiv.innerHTML='';
+  renderEquation();
+  bigN.innerText = digits.join('');
+  bigN.classList.remove('ok','bad');
+}
+
+/* find solutions depending on mode */
+function findSolutionsForMode(nums, modeLocal){
+  if(modeLocal==='fixed') return findSolutionsFixed(nums);
+  return findSolutionsArrangeable(nums);
+}
+
+/* Find solutions for fixed (only one order) */
+function findSolutionsFixed(nums){
+  const ops = ['+','-','*','/'];
+  const sols=[];
+  for(let a of ops) for(let b of ops) for(let c of ops){
+    let expr = `${nums[0]}${a}${nums[1]}${b}${nums[2]}${c}${nums[3]}`;
+    try{
+      let val = eval(expr);
+      if(Math.abs(val-10) < 1e-9) sols.push(expr);
+    }catch(e){}
+  }
+  // Remove duplicates (rare)
+  return Array.from(new Set(sols));
+}
+
+/* For arrangeable: check permutations, operator combos, and typical parenthesis patterns */
+function findSolutionsArrangeable(nums){
+  const ops = ['+','-','*','/'];
+  const perms = permute(nums);
+  const solsSet = new Set();
+  // typical parenthesis groupings for 4 numbers (binary tree shapes)
+  // patterns (in terms of tokens): 
+  // 1: ((a op b) op c) op d
+  // 2: (a op (b op c)) op d
+  // 3: a op ((b op c) op d)
+  // 4: a op (b op (c op d))
+  // 5: (a op b) op (c op d)
+  for(const p of perms){
+    for(let a of ops) for(let b of ops) for(let c of ops){
+      try{
+        // build and test five patterns:
+        const e1 = `(( ${p[0]} ${a} ${p[1]} ) ${b} ${p[2]}) ${c} ${p[3]}`;
+        const e2 = `( ${p[0]} ${a} ( ${p[1]} ${b} ${p[2]} )) ${c} ${p[3]}`;
+        const e3 = `${p[0]} ${a} (( ${p[1]} ${b} ${p[2]}) ${c} ${p[3]})`;
+        const e4 = `${p[0]} ${a} ( ${p[1]} ${b} ( ${p[2]} ${c} ${p[3]} ))`;
+        const e5 = `( ${p[0]} ${a} ${p[1]} ) ${b} ( ${p[2]} ${c} ${p[3]} )`;
+        const candidates = [e1,e2,e3,e4,e5];
+        for(const e of candidates){
+          // replace multiple spaces to single before eval
+          const ex = e.replace(/\s+/g,'');
+          let val = eval(ex);
+          if(Math.abs(val-10) < 1e-9){
+            // store using friendly formatting replacing * and / with × ÷ and removing extra parentheses spacing
+            solsSet.add(formatSolution(ex));
+          }
+        }
+      }catch(e){}
+    }
+  }
+  return Array.from(solsSet);
+}
+
+function formatSolution(expr){
+  return expr.replace(/\*/g,'×').replace(/\//g,'÷');
+}
+
+/* simple permutation generator */
+function permute(arr){
+  const out=[];
+  function rec(a, start){
+    if(start===a.length-1){ out.push(a.slice()); return; }
+    for(let i=start;i<a.length;i++){
+      [a[start],a[i]]=[a[i],a[start]];
+      rec(a,start+1);
+      [a[start],a[i]]=[a[i],a[start]];
+    }
+  }
+  rec(arr.slice(),0);
+  // dedupe by string just in case
+  const uniq = []; const seen = new Set();
+  for(const p of out){
+    const s = p.join(',');
+    if(!seen.has(s)){ seen.add(s); uniq.push(p); }
+  }
+  return uniq;
+}
+
+/* ---------------------------
+  Render equation area depending on mode
+---------------------------*/
+function renderEquation(){
+  eq.innerHTML = '';
+  if(mode==='fixed'){
+    // show numbers and dropdowns between them
+    for(let i=0;i<digits.length;i++){
+      const span = document.createElement('span');
+      span.className='token num';
+      span.textContent = digits[i];
+      eq.appendChild(span);
+      if(i < digits.length - 1){
+        const sel = document.createElement('select');
+        sel.className='opSelect';
+        sel.id = 'sel'+i;
+        [' ','+','-','*','/'].forEach(o=>{
+          const opt = document.createElement('option'); opt.value=o; opt.innerText = (o==='*')?'×':(o==='/')?'÷':o;
+          sel.appendChild(opt);
+        });
+        eq.appendChild(sel);
+      }
+    }
+  } else {
+    // arrangeable: create draggable tokens: num, op (default +), allow parentheses inserted later
+    for(let i=0;i<digits.length;i++){
+      const t = createToken(String(digits[i]), 'num');
+      eq.appendChild(t);
+      if(i < digits.length-1){
+        // insert default operator token '+' which is draggable if user wants to replace
+        const o = createToken('+','op');
+        eq.appendChild(o);
+      }
+    }
+    // set up token behaviors
+    setTokenDraggables();
+  }
+}
+
+/* create token element used in arrangeable */
+function createToken(text, type){
+  const s = document.createElement('span');
+  s.className = 'token ' + (type==='num'?'num': type==='op'?'op':'paren');
+  s.textContent = (text==='*') ? '×' : (text==='/') ? '÷' : text;
+  s.dataset.type = type;
+  s.draggable = true;
+  s.addEventListener('dragstart', dragToken);
+  s.addEventListener('dragend', dragEnd);
+  s.addEventListener('click', tokenClickToChangeOp);
+  return s;
+}
+
+/* Allow select-to-change op on click for better UX (cycles through + - × ÷) */
+function tokenClickToChangeOp(e){
+  const el = e.currentTarget;
+  if(mode!=='arrangeable') return;
+  if(el.dataset.type !== 'op') return;
+  const cycle = ['+','-','×','÷'];
+  let cur = el.textContent.trim();
+  let idx = cycle.indexOf(cur);
+  idx = (idx+1)%cycle.length;
+  el.textContent = cycle[idx];
+  el.dataset.op = (cycle[idx]==='×')?'*':(cycle[idx]==='÷')?'/':cycle[idx];
+}
+
+/* make tokens draggable and droppable within equation */
+function setTokenDraggables(){
+  // tokens already have drag listeners, also set drop handlers on eq for token-level drop
+  // We'll allow dropping between tokens by figuring the insertion index via mouse position
+  eq.querySelectorAll('.token').forEach(t=>{
+    t.ondragover = allowDrop;
+    t.ondrop = dropOnToken;
+  });
+}
+
+/* Drag helpers */
+let draggedData = null;
+function dragToken(e){
+  const el = e.currentTarget;
+  draggedData = {type: el.dataset.type, text: el.textContent, node: el};
+  // add transfer
+  e.dataTransfer.setData('text/plain', JSON.stringify({type:el.dataset.type, text:el.textContent}));
+  // allow copy for bracket source
+}
+function dragFromBracket(e){
+  const sym = e.currentTarget.dataset.symbol;
+  draggedData = {type: (sym==='('||sym===')')? 'paren' : 'op', text: sym};
+  e.dataTransfer.setData('text/plain', JSON.stringify(draggedData));
+}
+function dragEnd(e){ draggedData = null; }
+
+/* allow drop default */
+function allowDrop(e){ e.preventDefault(); }
+
+/* drop on whole equation (append) */
+function dropOnEquation(e){
+  e.preventDefault();
+  let data;
+  try { data = JSON.parse(e.dataTransfer.getData('text/plain')); } catch{ data = draggedData; }
+  if(!data) return;
+  insertTokenAtPosition(data, getInsertIndexFromEvent(e));
+}
+
+/* drop on token (insert before that token) */
+function dropOnToken(e){
+  e.preventDefault();
+  let data;
+  try { data = JSON.parse(e.dataTransfer.getData('text/plain')); } catch{ data = draggedData; }
+  if(!data) return;
+  const target = e.currentTarget;
+  // find index of target in eq children
+  const idx = Array.from(eq.children).indexOf(target);
+  insertTokenAtPosition(data, idx);
+}
+
+/* determine insertion index by X position within equation */
+function getInsertIndexFromEvent(e){
+  const children = Array.from(eq.children);
+  if(children.length===0) return 0;
+  // find nearest child center by x
+  const x = e.clientX;
+  for(let i=0;i<children.length;i++){
+    const r = children[i].getBoundingClientRect();
+    if(x < r.left + r.width/2) return i;
+  }
+  return children.length;
+}
+
+/* Insert token into eq at index with validation */
+function insertTokenAtPosition(data, index){
+  // create element accordingly
+  let newEl;
+  if(data.type==='num'){
+    newEl = createToken(data.text,'num');
+  } else if(data.type==='op'){
+    // data.text might be × ÷ or + -
+    let opText = data.text;
+    if(opText==='*') opText='×'; if(opText==='/') opText='÷';
+    newEl = createToken(opText,'op');
+    newEl.dataset.op = (opText==='×')? '*' : (opText==='÷')? '/' : opText;
+  } else if(data.type==='paren'){
+    const sym = (data.text==='('||data.text===')') ? data.text : data.text;
+    newEl = createToken(sym,'paren');
+  } else {
+    return;
+  }
+
+  // Validate rule: do not allow number adjacent to number without op between
+  const children = Array.from(eq.children);
+  // check neighbor before
+  const prev = (index-1>=0)? children[index-1]: null;
+  const next = (index<children.length)? children[index]: null;
+  // helper to check token is number
+  const isNum = el => el && (el.dataset?.type==='num');
+  if(newEl.dataset.type==='num'){
+    if(isNum(prev) || isNum(next)){
+      // invalid place: place a subtle flash instead of inserting
+      flashInvalidPosition(prev || next);
+      return;
+    }
+  }
+  // Insert
+  if(index >= children.length) eq.appendChild(newEl); else eq.insertBefore(newEl, children[index]);
+  // if dragged from inside eq (rearrange), remove original node if present
+  if(draggedData && draggedData.node && draggedData.node.parentElement===eq){
+    // if the original node was before insertion index, removal shifts index; best to remove by reference
+    if(draggedData.node !== newEl) draggedData.node.remove();
+  }
+  setTokenDraggables();
+}
+
+/* Flash invalid spot */
+function flashInvalidPosition(el){
+  if(!el) return;
+  el.classList.add('shake');
+  setTimeout(()=>el.classList.remove('shake'),380);
+}
+
+/* Removing bracket by dropping into bracket box: drop handler */
+function dropRemoveOrBracket(e){
+  e.preventDefault();
+  // if dragging an existing token (draggedData.node) and it is paren, remove it
+  try { var data = JSON.parse(e.dataTransfer.getData('text/plain')); } catch { data = draggedData; }
+  if(!data) return;
+  if(data.type==='paren' && draggedData && draggedData.node && draggedData.node.parentElement===eq){
+    draggedData.node.remove();
+    draggedData=null;
+    setTokenDraggables();
+  } else {
+    // dropping bracket from bracketBox (add new paren)
+    if(data.type==='paren'){
+      // insert at end
+      insertTokenAtPosition(data, eq.children.length);
+    }
+  }
+}
+
+/* ---------------------------
+  Submit & evaluate
+---------------------------*/
+function buildExpressionForEval(){
+  if(mode==='fixed'){
+    let expr = ''+digits[0];
+    for(let i=0;i<digits.length-1;i++){
+      const sel = document.getElementById('sel'+i);
+      const op = sel.value; expr += op + digits[i+1];
+    }
+    return expr;
+  } else {
+    // arrangeable: walk eq children to build string, mapping displayed symbols to JS friendly
+    const parts = [];
+    for(const ch of eq.children){
+      const t = ch.dataset.type;
+      let text = ch.textContent.trim();
+      if(t==='num') parts.push(text);
+      else if(t==='op') {
+        // map × ÷ back to * /
+        if(text==='×') parts.push('*');
+        else if(text==='÷') parts.push('/');
+        else parts.push(text);
+      } else if(t==='paren') parts.push(text);
+      else { parts.push(text); }
+    }
+    return parts.join('');
+  }
+}
+
+function onSubmit(){
+  const expr = buildExpressionForEval();
+  let value;
+  try { value = eval(expr); } catch { value = null; }
+  attempts++;
+  document.getElementById('attempts').innerText = "📊 Total attempts: "+attempts;
+  if(Math.abs(value - 10) < 1e-9){
+    correct++;
+    streakCnt++;
+    bigN.classList.add('ok'); bigN.classList.remove('bad');
+    correctSoundPlay();
+    // update bests & leaderboard
+    if(correct > bestScore){ bestScore = correct; localStorage.setItem('bestScore',bestScore); }
+    if(streakCnt > bestStreak){ bestStreak = streakCnt; localStorage.setItem('bestStreak',bestStreak); }
+    // save streak to leaderboard list
+    leaderboard.unshift(streakCnt);
+    leaderboard = Array.from(new Set(leaderboard)).slice(0,10); // keep unique-ish recent
+    localStorage.setItem('leaderboard',JSON.stringify(leaderboard));
+    updateStatsDisplay();
+    updateLeaderboardBox();
+    // new puzzle after short animation
+    setTimeout(()=>{ newSolvablePuzzle(); updateStatsDisplay(); },750);
+  } else {
+    incorrect++;
+    streakCnt = 0;
+    bigN.classList.add('bad'); bigN.classList.remove('ok'); bigN.classList.add('shake');
+    wrongSoundPlay();
+    updateStatsDisplay();
+    setTimeout(()=>bigN.classList.remove('shake'),400);
+  }
+}
+
+/* ---------------------------
+  Hints behavior
+    - show operator hints first: "Try using [op] for the [1st,2nd,3rd] operator."
+    - use the first available solution as the basis for operator hints
+    - operator text shows × and ÷
+    - after operator hints exhausted -> show full solutions (all found)
+    - disable hint button (greyed out) after full solutions shown
+---------------------------*/
+function onHint(){
+  if(!solutions || solutions.length===0) return;
+  const firstSol = solutions[0];
+  // extract operators from firstSol (left-to-right)
+  const opMatches = firstSol.match(/[\+\-\*\/]/g) || [];
+  // convert to display mapping
+  const opsDisplay = opMatches.map(o => (o==='*')?'×':(o==='/')?'÷':o);
+  const ordinal = ['1st','2nd','3rd'];
+  if(hintStep < opMatches.length){
+    const opSym = opsDisplay[hintStep];
+    hintsDiv.innerHTML += `<div>Try using <b>${opSym}</b> for the ${ordinal[hintStep]} operator.</div>`;
+    hintStep++;
+    // If we've now exhausted op hints and there are no further hints -> next press will show full solutions
+    if(hintStep >= opMatches.length){
+      // next press will show full solutions
+    }
+  } else {
+    // show full solutions (all), formatted. For arrangeable we already formatted × ÷ earlier
+    const out = solutions.map(s=> s.replace(/\*/g,'×').replace(/\//g,'÷'));
+    hintsDiv.innerHTML += `<div style="margin-top:8px"><b>Full solutions:</b><br>${out.join('<br>')}</div>`;
+    // disable hint button
+    hintBtn.disabled = true;
+    hintBtn.style.background = '#ccc';
+    hintBtn.style.cursor = 'not-allowed';
+  }
+}
+
+/* ---------------------------
+  Small UI helpers
+---------------------------*/
+function updateStatsDisplay(){
+  document.getElementById('score').innerText = "✅ Correct answers: " + correct;
+  document.getElementById('streak').innerText = "🔥 Current streak: " + streakCnt;
+  document.getElementById('attempts').innerText = "📊 Total attempts: " + attempts;
+  document.getElementById('incorrect').innerText = "❌ Incorrect answers: " + incorrect;
+  lbBest.innerText = "⭐ Highest correct answers: " + bestScore;
+  lbStreak.innerText = "🔥 Best streak: " + bestStreak;
+}
+
+/* Leaderboard left box visuals */
+function updateLeaderboardBox(){
+  lbBest.innerText = "⭐ Highest correct answers: " + bestScore;
+  lbStreak.innerText = "🔥 Best streak: " + bestStreak;
+  topList.innerHTML = '';
+  const arr = JSON.parse(localStorage.getItem('leaderboard')||'[]');
+  arr.slice(0,5).forEach(s=>{
+    const li = document.createElement('li'); li.textContent = s + ' 🔥'; topList.appendChild(li);
+  });
+}
+
+/* sounds */
+function correctSoundPlay(){ try{ new Audio('https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg').play(); }catch{} }
+function wrongSoundPlay(){ try{ new Audio('https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg').play(); }catch{} }
+
+/* ---------------------------
+  Utilities & init
+---------------------------*/
+updateStatsDisplay();
+updateLeaderboardBox();
+
+/* Expose small functions to window for simple debugging (optional) */
+window.startGame = startGame;
+window.onSubmit = onSubmit;
+window.onHint = onHint;
+
+</script>
+</body>
+</html>
