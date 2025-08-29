@@ -133,7 +133,7 @@ body {
   background: linear-gradient(-45deg, #74ebd5, #9face6, #ff6b6b, #f8cdda);
   background-size: 400% 400%;
   animation: gradientBG 12s ease infinite;
-  min-height: 100%;
+  margin-bottom: 15px;
 }
 
 html {
@@ -239,9 +239,10 @@ footer {
   background: #202020;
   color: #aaa;
   padding: 15px;
-  position: fixed;
+  position: absolute;
   bottom: 0;
   width: 100%;
+  height: 15px;
   font-size: 14px;
 }
 
