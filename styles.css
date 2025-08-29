@@ -239,7 +239,7 @@ footer {
   background: #202020;
   color: #aaa;
   padding: 15px;
-  position: absolute;
+  position: fixed;
   bottom: 0;
   width: 100%;
   font-size: 14px;
