@@ -17,9 +17,15 @@
 
   .modeBtn{
     font-size:20px;padding:14px 26px;margin:12px;border-radius:10px;border:none;
-    cursor:pointer;background:#4CAF50;color:white;
+    cursor:pointer;background:#4caf50;color:white;
   }
   .modeBtn.secondary{background:#3b82c4}
+
+  .modeBtn:hover {
+  background: #3a7c3c;
+  transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.35);
+}
 
   /* Leaderboard */
   #leaderboard{
