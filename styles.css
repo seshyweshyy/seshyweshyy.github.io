@@ -491,3 +491,66 @@ footer {
       font-size: 16px;
       color: #fff;
     }
+
+    /* --- Mobile Responsiveness --- */
+@media screen and (max-width: 768px) {
+  header h1 {
+    font-size: 22px;
+    padding: 0 10px;
+  }
+
+  main {
+    padding: 30px 10px;
+  }
+
+  h2 {
+    font-size: 22px;
+  }
+
+  .card, .link-card {
+    width: 90%;
+    font-size: 16px;
+    padding: 16px 20px;
+  }
+
+  .wrap {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .wrap::-webkit-scrollbar {
+    display: none;
+  }
+
+  .label {
+    font-size: 14px;
+    padding: 10px;
+    min-width: 90px;
+  }
+
+  .bar, .slidebar {
+    display: none; /* Optional: hide animated bar for smaller screens */
+  }
+
+  button {
+    font-size: 16px;
+    padding: 12px 20px;
+  }
+
+  footer {
+    font-size: 12px;
+    padding: 10px;
+  }
+
+  .game-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .game-card h3 {
+    font-size: 14px;
+  }
+}
