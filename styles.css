@@ -442,4 +442,9 @@ footer {
   transform: translateX(300%) scaleX(1);
 }
 
+.rd-4:checked ~ .bar,
+.rd-4:checked ~ .slidebar,
+.rd-4 + label:hover ~ .slidebar {
+  transform: translateX(412%) scaleX(1);
+}
 /*-------*/
