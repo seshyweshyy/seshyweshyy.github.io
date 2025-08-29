@@ -9,12 +9,34 @@
 <body>
   <header>
     <h1>About Me</h1>
-    <nav>
-      <a href="index">Home</a>
-      <a href="about">About</a>
-      <a href="games">Games</a>
-      <a href="links">Links</a>
-    </nav>
+    <!-- From Uiverse.io by ilkhoeri --> 
+<input hidden="" class="mode" id="theme-mode" type="checkbox" />
+<div class="container">
+  <div class="wrap">
+    <input hidden="" class="rd-1" name="radio" id="rd-1" type="radio"/>
+    <label onclick="window.location.href='index'" style="--index: 0;" class="label" for="rd-1"
+      ><span>Home</span></label
+    >
+
+    <input hidden="" class="rd-2" name="radio" id="rd-2" type="radio" checked=""/>
+    <label onclick="window.location.href='about'" style="--index: 1;" class="label" for="rd-2"
+      ><span>About Me</span></label
+    >
+
+    <input hidden="" class="rd-3" name="radio" id="rd-3" type="radio" />
+    <label onclick="window.location.href='games'" style="--index: 2;" class="label" for="rd-3"
+      ><span>Games</span></label
+    >
+
+    <input hidden="" class="rd-4" name="radio" id="rd-4" type="radio" />
+    <label onclick="window.location.href='links'" style="--index: 3;" class="label" for="rd-4"
+      ><span>Links</span></label
+    >
+
+    <div class="bar"></div>
+    <div class="slidebar"></div>
+  </div>
+</div>
   </header>
   <main>
     <h2>Who am I?</h2>
