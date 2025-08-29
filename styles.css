@@ -126,12 +126,18 @@
 /* GENERAL */
 body {
   font-family: "BurbankBold";
+  margin: 0;
   padding: 0;
   text-align: center;
   color: #222;
   background: linear-gradient(-45deg, #74ebd5, #9face6, #ff6b6b, #f8cdda);
   background-size: 400% 400%;
   animation: gradientBG 12s ease infinite;
+  min-height: 100%;
+}
+
+html {
+  min-height: 100%;
 }
 
 @keyframes gradientBG {
@@ -233,7 +239,9 @@ footer {
   background: #202020;
   color: #aaa;
   padding: 15px;
-  margin-top: 100px;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
   font-size: 14px;
 }
 
