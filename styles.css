@@ -133,6 +133,9 @@ body {
   background: linear-gradient(-45deg, #74ebd5, #9face6, #ff6b6b, #f8cdda);
   background-size: 400% 400%;
   animation: gradientBG 12s ease infinite;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 @keyframes gradientBG {
@@ -181,6 +184,7 @@ main {
   padding: 50px 20px;
   max-width: 900px;
   margin: auto;
+  flex: 1;
 }
 
 h2 {
