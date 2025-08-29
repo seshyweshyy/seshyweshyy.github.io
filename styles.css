@@ -2,6 +2,11 @@
     font-family: Burbank; 
     src: url("fonts/BurbankBigCondensedBlack.otf") format("opentype"); 
   } 
+
+  @font-face { 
+    font-family: BurbankBold; 
+    src: url("fonts/burbankbigcondensedbold.otf") format("opentype"); 
+  } 
   
   :root{--bg1:#74ebd5;--bg2:#9face6;}
   .make10body{
@@ -120,7 +125,7 @@
 /* other pages */
 /* GENERAL */
 body {
-  font-family: "Burbank";
+  font-family: "BurbankBold";
   margin: 0;
   padding: 0;
   text-align: center;
