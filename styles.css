@@ -546,11 +546,6 @@ footer {
     padding: 12px 20px;
   }
 
-  footer {
-    font-size: 12px;
-    padding: 10px;
-  }
-
   .game-grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 10px;
