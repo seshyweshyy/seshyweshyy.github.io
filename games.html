@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>seshyweshyy's Games</title>
+  <link rel="icon" type="image/png" href="images/games.png">
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #111;
+      color: #fff;
+      text-align: center;
+    }
+    header {
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 5px;
+    }
+    p {
+      color: #ccc;
+    }
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+      padding: 20px;
+    }
+    .game-card {
+      background: #1c1c1c;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+    .game-card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 15px rgba(0,0,0,0.7);
+    }
+    .game-card img {
+      width: 100%;
+      display: block;
+    }
+    .game-card h3 {
+      margin: 10px;
+      font-size: 16px;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>seshyweshy's games</h1>
+    <p>Select a game to play</p>
+  </header>
+  
+  <section class="game-grid">
+    <!-- Example Game Cards -->
+    <div class="game-card" onclick="window.location.href='make10'">
+      <img src="images/make10.jpg" alt="Make 10 Icon">
+      <h3>Make 10!</h3>
+    </div>
+    
+    <div class="game-card" onclick="none">
+      <img src="https://via.placeholder.com/300x180?text=Game+2" alt="Game 2 Icon">
+      <h3>Work In Progress!</h3>
+    </div>
+  </section>
+</body>
+</html>
