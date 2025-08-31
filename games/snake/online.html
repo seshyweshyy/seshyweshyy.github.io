@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Online Mode</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
+  <script type="module">
+    import { startOnlineGame } from './game.js';
+    import { Net } from './net.js';
+
+    const net = new Net('ws://localhost:8080');
+    startOnlineGame(document.getElementById('gameCanvas'), net);
+  </script>
+</body>
+</html>
