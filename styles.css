@@ -437,23 +437,23 @@ footer {
 .rd-1:checked ~ .bar,
 .rd-1:checked ~ .slidebar,
 .rd-1 + label:hover ~ .slidebar {
-  transform: translateX(18%) scaleX(1);
+  transform: translateX(17%) scaleX(1);
 }
 .rd-2:checked ~ .bar,
 .rd-2:checked ~ .slidebar,
 .rd-2 + label:hover ~ .slidebar {
-  transform: translateX(148%) scaleX(1);
+  transform: translateX(145%) scaleX(1);
 }
 .rd-3:checked ~ .bar,
 .rd-3:checked ~ .slidebar,
 .rd-3 + label:hover ~ .slidebar {
-  transform: translateX(250%) scaleX(1);
+  transform: translateX(280%) scaleX(1);
 }
 
 .rd-4:checked ~ .bar,
 .rd-4:checked ~ .slidebar,
 .rd-4 + label:hover ~ .slidebar {
-  transform: translateX(413%) scaleX(1);
+  transform: translateX(412%) scaleX(1);
 }
 /*-------*/
 
