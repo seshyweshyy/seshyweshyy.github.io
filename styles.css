@@ -447,7 +447,7 @@ footer {
 .rd-3:checked ~ .bar,
 .rd-3:checked ~ .slidebar,
 .rd-3 + label:hover ~ .slidebar {
-  transform: translateX(280%) scaleX(1);
+  transform: translateX(293%) scaleX(1);
 }
 
 .rd-4:checked ~ .bar,
