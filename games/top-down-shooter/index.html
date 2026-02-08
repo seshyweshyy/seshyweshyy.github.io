@@ -15,7 +15,7 @@
 
   <section class="game-grid">
     <div class="game-card" style="cursor: default;">
-      <div id="pygbag-root" style="width:960px;height:540px;margin:0 auto;"></div>
+      <canvas id="pygbag-canvas" width="960" height="540" style="display:block;margin:0 auto;border-radius:16px;"></canvas>
     </div>
   </section>
 
@@ -32,7 +32,7 @@
   <script src="https://pygame-web.github.io/pygbag/pygbag.js"></script>
   <script>
     if (window.pygbag) {
-      pygbag.main('main.py', { canvas: 'pygbag-root' });
+      pygbag.main('main.py', { canvas: 'pygbag-canvas' });
     }
   </script>
 </body>
