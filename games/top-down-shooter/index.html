@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Top-Down Shooter (Pygbag)</title>
+  <link rel="stylesheet" href="../../styles.css">
+  <link rel="icon" type="image/png" href="../../images/games.png">
+</head>
+<body class="gamebody">
+  <header class="gameheader">
+    <h1>Top-Down Shooter</h1>
+    <p>Move with WASD/arrow keys. Aim with the mouse and click to shoot. Press R to restart.</p>
+  </header>
+
+  <section class="game-grid">
+    <div class="game-card" style="cursor: default;">
+      <div id="pygbag-root" style="width:960px;height:540px;margin:0 auto;"></div>
+    </div>
+  </section>
+
+  <section class="game-grid">
+    <div class="game-card" style="cursor: default;">
+      <img src="../../images/games.png" alt="Tips">
+      <h3>Tips</h3>
+      <p style="padding: 0 16px 16px;">
+        Survive as long as you can. Enemies spawn at the edges and chase you.
+      </p>
+    </div>
+  </section>
+
+  <script src="https://pygame-web.github.io/pygbag/pygbag.js"></script>
+  <script>
+    if (window.pygbag) {
+      pygbag.main('main.py', { canvas: 'pygbag-root' });
+    }
+  </script>
+</body>
+</html>
