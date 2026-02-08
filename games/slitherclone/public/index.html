@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Slither Clone</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="ui">
+    <div class="panel" id="menu">
+      <h1>Slither Clone</h1>
+      <label>
+        Name
+        <input id="nameInput" type="text" maxlength="16" value="Player" />
+      </label>
+      <label>
+        Skin
+        <select id="skinInput">
+          <option value="classic">Classic</option>
+          <option value="ember">Ember</option>
+          <option value="mint">Mint</option>
+          <option value="neon">Neon</option>
+          <option value="forest">Forest</option>
+        </select>
+      </label>
+      <div class="row">
+        <button id="playOnline">Play Online</button>
+        <button id="playOffline">Play Offline</button>
+      </div>
+      <p class="hint">Move mouse to steer. Hold mouse or space to boost.</p>
+    </div>
+
+    <div class="panel" id="hud" hidden>
+      <div class="hud-row">
+        <div id="status">Connecting...</div>
+        <button id="leaveBtn">Leave</button>
+      </div>
+      <div id="leaderboard"></div>
+    </div>
+
+    <div class="panel" id="deathScreen" hidden>
+      <h2>You Died</h2>
+      <p class="hint">Your snake was eliminated.</p>
+      <button id="returnBtn">Return to Menu</button>
+    </div>
+  </div>
+
+  <canvas id="game"></canvas>
+  <script src="client.js"></script>
+</body>
+</html>
