@@ -465,20 +465,6 @@ main {
   }
 }
 
-/* Game tiles: same reactive shine, rest position moved to top-left */
-.glass-btn--tile .glass-btn-label--tile::after {
-  background-position: 8% 8%;
-}
-
-.glass-btn--tile:hover .glass-btn-label--tile::after {
-  background-position: 22% 18%;
-}
-
-.glass-btn--tile:active .glass-btn-label--tile::after {
-  background-position: 34% 4%;
-  --angle-2: -55deg;
-}
-
 .glass-btn::after {
   content: "";
   position: absolute;
@@ -561,6 +547,12 @@ main {
   width: 100%;
   flex-direction: column;
   align-items: stretch;
+}
+
+/* Suppress the pill-button diagonal sweep on tiles — the top-left
+   radial light above is the only light source for game cards now */
+.glass-btn-label--tile::after {
+  display: none;
 }
 
 .glass-btn-label--tile {
