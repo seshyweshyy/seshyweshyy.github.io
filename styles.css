@@ -365,13 +365,6 @@ main {
   transition: all var(--anim--hover-time) var(--anim--hover-ease);
 }
 
-/* Top-left light, game tiles only */
-.glass-btn--tile {
-  background:
-    radial-gradient(120% 120% at 12% 8%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03) 60%);
-}
-
 .glass-btn:hover {
   transform: scale(0.975);
   backdrop-filter: blur(0.01em) saturate(180%);
@@ -448,6 +441,20 @@ main {
   .glass-btn:active .glass-btn-label::after {
     --angle-2: -45deg;
   }
+}
+
+/* Game tiles: same reactive shine, rest position moved to top-left */
+.glass-btn--tile .glass-btn-label--tile::after {
+  background-position: 8% 8%;
+}
+
+.glass-btn--tile:hover .glass-btn-label--tile::after {
+  background-position: 22% 18%;
+}
+
+.glass-btn--tile:active .glass-btn-label--tile::after {
+  background-position: 34% 4%;
+  --angle-2: -55deg;
 }
 
 .glass-btn::after {
