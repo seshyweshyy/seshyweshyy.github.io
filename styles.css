@@ -353,9 +353,7 @@ main {
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
   pointer-events: auto;
   z-index: 3;
-  background:
-    radial-gradient(120% 120% at 12% 8%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03) 60%);
+  background: linear-gradient(-75deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.05));
   border-radius: var(--glass-radius, 999vw);
   box-shadow:
     inset 0 0.125em 0.125em rgba(0, 0, 0, 0.2),
@@ -365,6 +363,14 @@ main {
   backdrop-filter: blur(clamp(1px, 0.125em, 4px)) saturate(180%);
   -webkit-backdrop-filter: blur(clamp(1px, 0.125em, 4px)) saturate(180%);
   transition: all var(--anim--hover-time) var(--anim--hover-ease);
+}
+
+/* Top-left light, game tiles only */
+.glass-btn--tile {
+  background:
+    radial-gradient(120% 120% at 12% 8%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03) 60%);
+}sition: all var(--anim--hover-time) var(--anim--hover-ease);
 }
 
 .glass-btn:hover {
