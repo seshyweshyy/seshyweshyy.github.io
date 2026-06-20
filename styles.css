@@ -189,6 +189,7 @@ header h1 {
 }
 
 nav.glass-nav {
+  position: relative;
   display: inline-flex;
   gap: 4px;
   padding: 6px;
@@ -199,20 +200,41 @@ nav.glass-nav {
   -webkit-backdrop-filter: blur(20px) saturate(180%);
 }
 
+.nav-pill {
+  position: absolute;
+  top: 6px;
+  left: 0;
+  height: calc(100% - 12px);
+  border-radius: 999px;
+  background: var(--text-primary);
+  transition: transform 0.45s cubic-bezier(0.65, 0, 0.35, 1),
+              width 0.45s cubic-bezier(0.65, 0, 0.35, 1);
+  z-index: 0;
+  will-change: transform, width;
+}
+
 nav.glass-nav a {
+  position: relative;
+  z-index: 1;
   padding: 10px 22px;
   border-radius: 999px;
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
   color: var(--text-secondary);
-  transition: all 0.25s ease;
+  transition: color 0.25s ease;
 }
 
 nav.glass-nav a:hover { color: var(--text-primary); }
 
 nav.glass-nav a.active {
-  background: var(--text-primary);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Black text only once the JS pill is actually rendered behind it,
+   so a no-JS fallback still shows a clear (white, bold) active state */
+nav.glass-nav.js-ready a.active {
   color: #000;
 }
 
@@ -285,8 +307,8 @@ main {
 .link-card:hover {
   background: var(--surface-hover);
   transform: translateY(-4px);
-  border-color: var(--blue);
-  box-shadow: 0 12px 30px rgba(10, 132, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
 }
 
 .game-grid {
@@ -308,8 +330,8 @@ main {
 
 .game-card:hover {
   transform: translateY(-6px);
-  border-color: var(--blue);
-  box-shadow: 0 16px 40px rgba(10, 132, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.5);
 }
 
 .game-card img {
