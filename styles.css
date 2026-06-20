@@ -370,7 +370,6 @@ main {
   background:
     radial-gradient(120% 120% at 12% 8%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%),
     linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03) 60%);
-}sition: all var(--anim--hover-time) var(--anim--hover-ease);
 }
 
 .glass-btn:hover {
