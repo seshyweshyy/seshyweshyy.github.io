@@ -191,6 +191,11 @@ header {
 .avatar {
   width: 40px;
   height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  max-width: 40px;
+  max-height: 40px;
+  flex-shrink: 0;
   border-radius: 50%;
   object-fit: cover;
   border: 1px solid var(--border);
@@ -230,10 +235,12 @@ nav.glass-nav::before {
   border-radius: 999px;
   padding: 1px;
   box-sizing: border-box;
-  background: conic-gradient(from -75deg at 50% 50%,
-    rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0) 5% 40%,
-    rgba(255, 255, 255, 0.45) 50%, rgba(255, 255, 255, 0) 60% 95%,
-    rgba(255, 255, 255, 0.45));
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0.1) 35%,
+    rgba(255, 255, 255, 0.04) 50%,
+    rgba(255, 255, 255, 0.1) 65%,
+    rgba(255, 255, 255, 0.55) 100%);
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask-composite: exclude;
   pointer-events: none;
