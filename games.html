@@ -3,47 +3,54 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>seshyweshyy's Games</title>
+  <title>seshyweshyy | Games</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="icon" type="image/png" href="images/games.png">
 </head>
-<body class="gamebody">
-  <header class="gameheader">
-    <h1>seshyweshy's games</h1>
-    <p>Select a game to play</p>
+<body>
+  <header>
+    <h1>Games</h1>
+    <nav class="glass-nav">
+      <a href="index">Home</a>
+      <a href="about">About Me</a>
+      <a href="games" class="active">Games</a>
+      <a href="links">Links</a>
+    </nav>
   </header>
-  
-  <section class="game-grid">
-    <!-- Game Cards -->
-    <div class="game-card" onclick="window.location.href='games/make10'">
-      <img src="images/make10.jpg" alt="Make 10 Icon">
-      <h3>Make 10!</h3>
-    </div>
 
-    <div class="game-card" onclick="window.location.href='games/slitherclone/public/index'">
-      <img src="images/slither.png">
-      <h3>snake.clone</h3>
-    </div>
+  <main>
+    <p class="subtitle">Select a game to play</p>
+    <section class="game-grid">
+      <div class="game-card" onclick="window.location.href='games/make10'">
+        <img src="images/make10.jpg" alt="Make 10 Icon">
+        <h3>Make 10!</h3>
+      </div>
 
-    <div class="game-card" onclick="window.location.href='games/tetris'">
-      <img src="images/tetris.jpg">
-      <h3>Tetris</h3>
-    </div>
+      <div class="game-card" onclick="window.location.href='games/slitherclone/public/index'">
+        <img src="images/slither.png" alt="snake.clone Icon">
+        <h3>snake.clone</h3>
+      </div>
 
-    <div class="game-card" onclick="window.location.href='games/flappy-bird'">
-      <img src="images/flappy-bird.svg" alt="Flappy Bird Icon">
-      <h3>Flappy Bird</h3>
-    </div>
+      <div class="game-card" onclick="window.location.href='games/tetris'">
+        <img src="images/tetris.jpg" alt="Tetris Icon">
+        <h3>Tetris</h3>
+      </div>
 
-    <div class="game-card" onclick="window.location.href='games/top-down-shooter/'">
-      <img src="images/games.png" alt="Top-Down Shooter Icon">
-      <h3>Top-Down Shooter</h3>
-    </div>
+      <div class="game-card" onclick="window.location.href='games/flappy-bird'">
+        <img src="images/flappy-bird.svg" alt="Flappy Bird Icon">
+        <h3>Flappy Bird</h3>
+      </div>
 
-    <div class="game-card" onclick="window.location.href='games/hangman'">
-      <img src="images/games.png" alt="Hangman Icon">
-      <h3>Hangman</h3>
-    </div>
-  </section>
+      <div class="game-card" onclick="window.location.href='games/top-down-shooter/'">
+        <img src="images/games.png" alt="Top-Down Shooter Icon">
+        <h3>Top-Down Shooter</h3>
+      </div>
+
+      <div class="game-card" onclick="window.location.href='games/hangman'">
+        <img src="images/games.png" alt="Hangman Icon">
+        <h3>Hangman</h3>
+      </div>
+    </section>
+  </main>
 </body>
 </html>
