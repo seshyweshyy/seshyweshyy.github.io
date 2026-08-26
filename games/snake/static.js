@@ -25,12 +25,30 @@ export function serveStatic(req, res, rootUrl) {
   }
 
   fs.readFile(filePath, (err, data) => {
-    if (err) {
-      res.writeHead(404, { 'Content-Type': 'text/plain' });
-      res.end('Not found');
+    if (!err) {
+      res.writeHead(200, { 'Content-Type': MIME[path.extname(filePath)] || 'application/octet-stream' });
+      res.end(data);
       return;
     }
-    res.writeHead(200, { 'Content-Type': MIME[path.extname(filePath)] || 'application/octet-stream' });
-    res.end(data);
+
+    // Support extensionless links (e.g. "solo", "online") like GitHub Pages does.
+    if (!path.extname(filePath)) {
+      const htmlPath = `${filePath}.html`;
+      if (htmlPath.startsWith(root)) {
+        fs.readFile(htmlPath, (err2, data2) => {
+          if (err2) {
+            res.writeHead(404, { 'Content-Type': 'text/plain' });
+            res.end('Not found');
+            return;
+          }
+          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(data2);
+        });
+        return;
+      }
+    }
+
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('Not found');
   });
 }
