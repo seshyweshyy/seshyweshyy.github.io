@@ -13,9 +13,17 @@
       <p>Select a mode:</p>
       <div class="btns">
         <a href="solo" class="btn">Play Solo</a>
-        <a href="online" class="btn">Play Online</a>
+        <a href="online" id="onlineLink" class="btn">Play Online</a>
       </div>
     </div>
   </div>
+  <script>
+    // Set this to the game server's URL once it's deployed (e.g. via render.yaml),
+    // so "Play Online" works from the static GitHub Pages site too.
+    var ONLINE_SERVER_URL = '';
+    if (ONLINE_SERVER_URL && location.hostname !== 'localhost') {
+      document.getElementById('onlineLink').href = ONLINE_SERVER_URL;
+    }
+  </script>
 </body>
 </html>

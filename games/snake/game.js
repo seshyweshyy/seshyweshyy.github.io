@@ -54,29 +54,66 @@ export function startSoloGame(canvas) {
 
 export function startOnlineGame(canvas, net) {
   const ctx = canvas.getContext('2d');
-  const snakes = {};
   const myId = net.id;
+  let snakes = {};
+  let dead = false;
+  let status = 'connecting';
+
+  function toCanvasCoords(e) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (e.clientX - rect.left) * (canvas.width / rect.width),
+      y: (e.clientY - rect.top) * (canvas.height / rect.height)
+    };
+  }
 
   canvas.addEventListener('mousemove', e => {
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-    net.send({ type: 'move', x: mx, y: my });
+    if (dead) return;
+    const { x, y } = toCanvasCoords(e);
+    net.send({ type: 'move', x, y });
   });
+
+  canvas.addEventListener('click', () => {
+    if (dead) net.send({ type: 'respawn' });
+  });
+
+  net.onStatus(s => { status = s; });
 
   net.onMessage(msg => {
     if (msg.type === 'state') {
-      for (let [id, s] of Object.entries(msg.snakes)) {
-        snakes[id] = s;
-      }
+      snakes = msg.snakes;
+      dead = snakes[myId] ? !snakes[myId].alive : false;
     }
   });
 
+  function drawOverlay(text) {
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#fff';
+    ctx.font = '28px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+  }
+
   function loop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    for (let s of Object.values(snakes)) {
+    for (const s of Object.values(snakes)) {
       drawSnake(ctx, s);
+      if (s.id === myId) {
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, 11, 0, Math.PI * 2);
+        ctx.stroke();
+      }
     }
+
+    if (status !== 'open') {
+      drawOverlay('Connecting to server…');
+    } else if (dead) {
+      drawOverlay('You died — click to respawn');
+    }
+
     requestAnimationFrame(loop);
   }
   loop();

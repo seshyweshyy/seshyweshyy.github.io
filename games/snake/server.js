@@ -1,44 +1,81 @@
 // server.js
+import http from 'http';
 import { WebSocketServer } from 'ws';
+import { serveStatic } from './static.js';
 
-const wss = new WebSocketServer({ port: 8080 });
+const PORT = process.env.PORT || 8080;
+const WIDTH = 800;
+const HEIGHT = 600;
+const FOOD_COUNT = 30;
+
 const snakes = {};
-let food = Array.from({ length: 30 }, () => createFood(800, 600));
+let food = Array.from({ length: FOOD_COUNT }, () => createFood());
 
-function createFood(width, height) {
-  return { x: Math.random() * width, y: Math.random() * height, r: 5, color: 'red' };
+function createFood(color = 'red') {
+  return { x: Math.random() * WIDTH, y: Math.random() * HEIGHT, r: 5, color };
 }
+
+function spawnSnake(id) {
+  return {
+    id,
+    x: Math.random() * WIDTH,
+    y: Math.random() * HEIGHT,
+    tail: [],
+    color: `hsl(${Math.floor(Math.random() * 360)}, 80%, 55%)`,
+    score: 0,
+    length: 30,
+    alive: true
+  };
+}
+
+const server = http.createServer((req, res) => {
+  serveStatic(req, res, new URL('./', import.meta.url));
+});
+
+const wss = new WebSocketServer({ server });
 
 wss.on('connection', ws => {
   let id = null;
 
   ws.on('message', data => {
-    const msg = JSON.parse(data);
-    if (!id) id = msg.id;
+    let msg;
+    try {
+      msg = JSON.parse(data);
+    } catch {
+      return;
+    }
+    if (!msg || typeof msg.id !== 'string') return;
+    id = msg.id;
 
     if (msg.type === 'move') {
-      if (!snakes[msg.id]) {
-        snakes[msg.id] = { id: msg.id, x: msg.x, y: msg.y, tail: [], color: 'orange', score: 0, length: 30, alive: true };
-      } else {
-        let snake = snakes[msg.id];
-        if (!snake.alive) return;
-
-        // Update snake
-        snake.tail.unshift({ x: snake.x, y: snake.y });
-        if (snake.tail.length > snake.length) snake.tail.pop();
-        snake.x = msg.x;
-        snake.y = msg.y;
-
-        checkFoodCollision(snake);
-        checkSnakeCollision(snake);
+      if (typeof msg.x !== 'number' || typeof msg.y !== 'number') return;
+      let snake = snakes[id];
+      if (!snake) {
+        snake = snakes[id] = spawnSnake(id);
       }
+      if (!snake.alive) return;
+
+      snake.tail.unshift({ x: snake.x, y: snake.y });
+      if (snake.tail.length > snake.length) snake.tail.pop();
+      snake.x = Math.max(0, Math.min(WIDTH, msg.x));
+      snake.y = Math.max(0, Math.min(HEIGHT, msg.y));
+
+      checkFoodCollision(snake);
+      checkSnakeCollision(snake);
+    } else if (msg.type === 'respawn') {
+      snakes[id] = spawnSnake(id);
+    } else {
+      return;
     }
 
     broadcast({ type: 'state', snakes, food });
   });
 
   ws.on('close', () => {
-    if (id) delete snakes[id];
+    if (id && snakes[id]) {
+      delete snakes[id];
+      broadcast({ type: 'state', snakes, food });
+    }
   });
 });
 
@@ -51,21 +88,20 @@ function checkFoodCollision(snake) {
       snake.length += 5;
       snake.score += 1;
       food.splice(i, 1);
-      food.push(createFood(800, 600));
+      food.push(createFood());
       break;
     }
   }
 }
 
 function checkSnakeCollision(snake) {
-  for (let [id, other] of Object.entries(snakes)) {
+  for (const [id, other] of Object.entries(snakes)) {
     if (id === snake.id || !other.alive) continue;
-    for (let seg of other.tail) {
+    for (const seg of other.tail) {
       const dx = snake.x - seg.x;
       const dy = snake.y - seg.y;
       if (Math.sqrt(dx * dx + dy * dy) < 8) {
         snake.alive = false;
-        // Drop food on death
         for (let i = 0; i < snake.tail.length; i += 5) {
           food.push({ x: snake.tail[i].x, y: snake.tail[i].y, r: 5, color: 'gold' });
         }
@@ -81,3 +117,7 @@ function broadcast(obj) {
     if (client.readyState === 1) client.send(str);
   });
 }
+
+server.listen(PORT, () => {
+  console.log(`Snake online server listening on http://localhost:${PORT}`);
+});

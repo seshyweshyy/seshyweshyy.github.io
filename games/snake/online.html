@@ -11,7 +11,7 @@
     import { startOnlineGame } from './game.js';
     import { Net } from './net.js';
 
-    const net = new Net('ws://localhost:8080');
+    const net = new Net();
     startOnlineGame(document.getElementById('gameCanvas'), net);
   </script>
 </body>
