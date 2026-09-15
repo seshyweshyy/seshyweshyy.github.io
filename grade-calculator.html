@@ -1,0 +1,930 @@
+<title>NSW Grade Calculator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&display=swap');
+
+  :root{
+    --bg:#F6F1E7;
+    --surface:#FFFFFF;
+    --surface-alt:#FBF7EF;
+    --sunken:#EFE8D8;
+    --border:#E2D9C4;
+    --ink:#241F17;
+    --ink-muted:#6E6656;
+    --ink-faint:#938971;
+    --accent:#9C2B22;
+    --accent-strong:#7A211A;
+    --accent-tint:#F4E2DE;
+    --accent-on:#FFFFFF;
+    --shadow: 0 1px 2px rgba(36,31,23,0.06), 0 8px 24px -12px rgba(36,31,23,0.18);
+    --band-1:#A32C22;
+    --band-2:#BE5B27;
+    --band-3:#B98A2A;
+    --band-4:#7E8F3E;
+    --band-5:#42794F;
+    --band-6:#2E6E52;
+    --focus-ring: 0 0 0 3px rgba(156,43,34,0.28);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#181511;
+      --surface:#221D17;
+      --surface-alt:#1D1914;
+      --sunken:#2A241C;
+      --border:#3A3225;
+      --ink:#F2EBDD;
+      --ink-muted:#B6AB92;
+      --ink-faint:#847A64;
+      --accent:#E06B5C;
+      --accent-strong:#EC8577;
+      --accent-tint:#3A2420;
+      --accent-on:#241009;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 28px -14px rgba(0,0,0,0.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#181511;
+    --surface:#221D17;
+    --surface-alt:#1D1914;
+    --sunken:#2A241C;
+    --border:#3A3225;
+    --ink:#F2EBDD;
+    --ink-muted:#B6AB92;
+    --ink-faint:#847A64;
+    --accent:#E06B5C;
+    --accent-strong:#EC8577;
+    --accent-tint:#3A2420;
+    --accent-on:#241009;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 28px -14px rgba(0,0,0,0.6);
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    padding:0 20px;
+  }
+  .wrap{
+    max-width:920px;
+    margin:0 auto;
+    padding-block:32px 56px;
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+  }
+
+  /* ---------- Letterhead ---------- */
+  .letterhead{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:16px;
+    padding-bottom:18px;
+    border-bottom:3px solid var(--accent);
+    flex-wrap:wrap;
+  }
+  .letterhead h1{
+    font-family:'Fraunces', Georgia, 'Times New Roman', serif;
+    font-weight:600;
+    font-size:clamp(1.7rem, 1.3rem + 1.6vw, 2.5rem);
+    line-height:1.05;
+    margin:0;
+    text-wrap:balance;
+    letter-spacing:-0.01em;
+  }
+  .letterhead .kicker{
+    display:block;
+    font-family:'Public Sans',sans-serif;
+    font-weight:700;
+    font-size:0.72rem;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin-bottom:6px;
+  }
+  .letterhead .sub{
+    max-width:46ch;
+    color:var(--ink-muted);
+    font-size:0.95rem;
+    line-height:1.5;
+    margin-top:8px;
+  }
+  .letterhead .badge-nesa{
+    font-size:0.72rem;
+    color:var(--ink-faint);
+    text-align:right;
+    line-height:1.5;
+    white-space:nowrap;
+  }
+
+  /* ---------- Stage selector ---------- */
+  .stage-select{
+    display:flex;
+    gap:6px;
+    background:var(--sunken);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:5px;
+    flex-wrap:wrap;
+  }
+  .stage-select button{
+    flex:1 1 160px;
+    border:none;
+    background:transparent;
+    color:var(--ink-muted);
+    font-family:inherit;
+    font-weight:600;
+    font-size:0.88rem;
+    padding:10px 14px;
+    border-radius:8px;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease, box-shadow .15s ease;
+  }
+  .stage-select button.active{
+    background:var(--surface);
+    color:var(--ink);
+    box-shadow:var(--shadow);
+  }
+  .stage-select button:focus-visible{ box-shadow:var(--focus-ring); outline:none; }
+
+  /* ---------- Result card ---------- */
+  .result-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:16px;
+    box-shadow:var(--shadow);
+    padding:24px 26px;
+    display:grid;
+    grid-template-columns:auto 1fr;
+    gap:22px;
+    align-items:center;
+  }
+  .result-badge{
+    width:92px;
+    height:92px;
+    border-radius:14px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    flex-shrink:0;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+  }
+  .result-badge .code{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:2.1rem;
+    line-height:1;
+  }
+  .result-badge .pct{
+    font-size:0.72rem;
+    font-weight:600;
+    margin-top:4px;
+    opacity:0.92;
+    font-variant-numeric: tabular-nums;
+  }
+  .result-body .grade-name{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:1.3rem;
+    margin:0 0 4px;
+  }
+  .result-body .grade-desc{
+    font-size:0.92rem;
+    color:var(--ink-muted);
+    line-height:1.5;
+    max-width:56ch;
+    border-left:2px solid var(--border);
+    padding-left:10px;
+    margin:6px 0 0;
+  }
+  .result-meta{
+    grid-column:1 / -1;
+    display:flex;
+    gap:18px;
+    flex-wrap:wrap;
+    padding-top:16px;
+    margin-top:2px;
+    border-top:1px solid var(--border);
+    font-size:0.82rem;
+    color:var(--ink-muted);
+  }
+  .result-meta strong{ color:var(--ink); font-variant-numeric: tabular-nums; }
+  .scale-legend{
+    grid-column:1 / -1;
+    display:flex;
+    flex-wrap:wrap;
+    row-gap:8px;
+    column-gap:16px;
+  }
+  .scale-legend .legend-item{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    font-size:0.8rem;
+    color:var(--ink-muted);
+    font-variant-numeric: tabular-nums;
+    white-space:nowrap;
+  }
+  .scale-legend .dot{
+    width:9px;
+    height:9px;
+    border-radius:50%;
+    flex-shrink:0;
+  }
+  .caveat{
+    grid-column:1 / -1;
+    font-size:0.78rem;
+    color:var(--ink-faint);
+    line-height:1.5;
+    margin:0;
+  }
+  .pct-toggle-row{
+    grid-column:1 / -1;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    padding-top:14px;
+    margin-top:2px;
+    border-top:1px solid var(--border);
+  }
+  .pct-toggle-row .pct-toggle-label{
+    font-size:0.78rem;
+    font-weight:600;
+    color:var(--ink-muted);
+  }
+  .pct-toggle{
+    display:inline-flex;
+    background:var(--sunken);
+    border:1px solid var(--border);
+    border-radius:9px;
+    padding:3px;
+    gap:2px;
+  }
+  .pct-toggle button{
+    border:none;
+    background:transparent;
+    color:var(--ink-muted);
+    font-family:inherit;
+    font-weight:600;
+    font-size:0.78rem;
+    padding:6px 11px;
+    border-radius:6px;
+    cursor:pointer;
+  }
+  .pct-toggle button.active{
+    background:var(--surface);
+    color:var(--ink);
+    box-shadow:var(--shadow);
+  }
+  .pct-toggle button:focus-visible{ outline:none; box-shadow:var(--focus-ring); }
+  .pct-note{
+    grid-column:1 / -1;
+    font-size:0.78rem;
+    color:var(--ink-faint);
+    line-height:1.5;
+    margin:0;
+  }
+  .empty-state{
+    color:var(--ink-muted);
+    font-size:0.95rem;
+    grid-column:1/-1;
+  }
+
+  /* ---------- Section headings ---------- */
+  .section-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .section-head h2{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:1.15rem;
+    margin:0;
+  }
+  .section-head .hint{
+    font-size:0.8rem;
+    color:var(--ink-faint);
+  }
+  .link-btn{
+    background:none;
+    border:none;
+    color:var(--accent);
+    font-family:inherit;
+    font-weight:600;
+    font-size:0.85rem;
+    cursor:pointer;
+    padding:4px 2px;
+  }
+  .link-btn:hover{ text-decoration:underline; }
+
+  /* ---------- Task table ---------- */
+  .task-panel{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:16px;
+    box-shadow:var(--shadow);
+    padding:22px 24px 20px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .task-table-head{
+    display:grid;
+    grid-template-columns: 1fr 108px 108px 34px;
+    gap:10px;
+    padding:0 2px;
+    font-size:0.72rem;
+    font-weight:700;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+  }
+  .task-row{
+    display:grid;
+    grid-template-columns: 1fr 108px 108px 34px;
+    gap:10px;
+    align-items:center;
+  }
+  .task-row input{
+    width:100%;
+    font-family:'Public Sans',sans-serif;
+    font-size:0.92rem;
+    color:var(--ink);
+    background:var(--surface-alt);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:9px 10px;
+    font-variant-numeric: tabular-nums;
+  }
+  .task-row input:focus-visible{ outline:none; box-shadow:var(--focus-ring); border-color:var(--accent); }
+  .pct-field{ position:relative; }
+  .pct-field input{ padding-right:22px; }
+  .pct-field::after{
+    content:'%';
+    position:absolute;
+    right:10px; top:50%;
+    transform:translateY(-50%);
+    color:var(--ink-faint);
+    font-size:0.85rem;
+    pointer-events:none;
+  }
+  .row-remove{
+    width:30px; height:30px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:var(--surface-alt);
+    color:var(--ink-faint);
+    cursor:pointer;
+    font-size:1rem;
+    line-height:1;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .row-remove:hover{ color:var(--accent); border-color:var(--accent); }
+
+  .totals-row{
+    display:grid;
+    grid-template-columns: 1fr 108px 108px 34px;
+    gap:10px;
+    padding-top:10px;
+    border-top:1px solid var(--border);
+    font-size:0.85rem;
+    font-weight:600;
+    align-items:center;
+  }
+  .totals-row .totals-label{ color:var(--ink-muted); font-weight:600; }
+  .totals-row .totals-val{ font-variant-numeric: tabular-nums; color:var(--ink); }
+
+  .table-actions{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+
+  /* ---------- Buttons ---------- */
+  .btn{
+    font-family:inherit;
+    font-weight:600;
+    font-size:0.88rem;
+    border-radius:9px;
+    padding:10px 18px;
+    cursor:pointer;
+    border:1px solid var(--border);
+    background:var(--surface-alt);
+    color:var(--ink);
+  }
+  .btn:hover{ border-color:var(--ink-faint); }
+  .btn.primary{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:var(--accent-on);
+  }
+  .btn.primary:hover{ background:var(--accent-strong); border-color:var(--accent-strong); }
+  .btn:focus-visible{ outline:none; box-shadow:var(--focus-ring); }
+
+  /* ---------- Planning panel ---------- */
+  .plan-panel{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:16px;
+    box-shadow:var(--shadow);
+    padding:22px 24px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+  .plan-grid{
+    display:grid;
+    grid-template-columns: repeat(2, minmax(160px,1fr));
+    gap:14px;
+  }
+  .field label{
+    display:block;
+    font-size:0.78rem;
+    font-weight:600;
+    color:var(--ink-muted);
+    margin-bottom:6px;
+  }
+  .field .pct-field input{ width:100%; }
+  .field input, .field select{
+    width:100%;
+    font-family:'Public Sans',sans-serif;
+    font-size:0.95rem;
+    color:var(--ink);
+    background:var(--surface-alt);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:10px 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .field input:focus-visible, .field select:focus-visible{ outline:none; box-shadow:var(--focus-ring); border-color:var(--accent); }
+  .field .field-note{
+    display:block;
+    font-size:0.72rem;
+    font-weight:400;
+    color:var(--ink-faint);
+    margin-top:6px;
+  }
+  .field .auto-btn{
+    background:none;
+    border:none;
+    font-family:inherit;
+    font-weight:600;
+    font-size:0.7rem;
+    color:var(--ink-faint);
+    padding:0 0 0 6px;
+    cursor:default;
+  }
+  .field .auto-btn.is-manual{ color:var(--accent); cursor:pointer; }
+  .field .auto-btn.is-manual:hover{ text-decoration:underline; }
+  .plan-result{
+    background:var(--sunken);
+    border-radius:12px;
+    padding:16px 18px;
+    font-size:0.92rem;
+    line-height:1.6;
+    color:var(--ink);
+  }
+  .plan-result strong{ font-variant-numeric: tabular-nums; }
+  .plan-result .chip{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:1.6em;
+    padding:0 6px;
+    height:1.6em;
+    border-radius:6px;
+    color:#fff;
+    font-weight:700;
+    font-size:0.85em;
+    vertical-align:-2px;
+  }
+
+  footer.note{
+    font-size:0.78rem;
+    color:var(--ink-faint);
+    line-height:1.6;
+    text-align:center;
+    padding-top:6px;
+  }
+  footer.note a{ color:var(--ink-faint); }
+
+  @media print{
+    .stage-select, .table-actions, .plan-panel, footer.note, .btn { display:none !important; }
+  }
+
+  @media (max-width:620px){
+    .result-card{ grid-template-columns:1fr; text-align:left; }
+    .task-table-head{ display:none; }
+    .task-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px 10px;
+      padding-bottom:12px;
+      border-bottom:1px dashed var(--border);
+    }
+    .task-row:last-of-type{ border-bottom:none; }
+    .task-row input[data-field="name"]{ order:1; flex:1 1 200px; min-width:0; }
+    .row-remove{ order:2; flex:0 0 34px; }
+    .task-row .pct-field[data-field="mark"]{ order:3; flex:1 1 45%; }
+    .task-row .pct-field[data-field="weight"]{ order:4; flex:1 1 45%; }
+    .task-row .pct-field{ display:flex; flex-direction:column; gap:4px; }
+    .task-row .pct-field::before{
+      order:-1;
+      font-size:0.66rem;
+      font-weight:700;
+      letter-spacing:0.05em;
+      text-transform:uppercase;
+      color:var(--ink-faint);
+    }
+    .task-row .pct-field[data-field="mark"]::before{ content:'Mark'; }
+    .task-row .pct-field[data-field="weight"]::before{ content:'Weight'; }
+    .task-row .pct-field::after{ top:auto; bottom:9px; transform:none; }
+    .totals-row{ grid-template-columns:1fr 34px; }
+    .totals-row .weight-total{ grid-column:2/3; text-align:right; }
+    .plan-grid{ grid-template-columns:1fr; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="letterhead">
+    <div>
+      <span class="kicker">NSW Education Standards Authority · Reporting Scales</span>
+      <h1>NSW Grade Calculator</h1>
+      <p class="sub">Work out a weighted overall result and see it against the actual scale your report card uses — the K–10 Common Grade Scale, the Year 11 Preliminary scale, or HSC performance bands.</p>
+    </div>
+    <div class="badge-nesa">Common Grade Scale &amp; HSC<br>Performance Bands</div>
+  </header>
+
+  <nav class="stage-select" role="tablist" aria-label="Reporting stage">
+    <button type="button" class="stage-btn active" data-stage="y1-10" role="tab" aria-selected="true">Years 1–10</button>
+    <button type="button" class="stage-btn" data-stage="y11" role="tab" aria-selected="false">Year 11 (Preliminary)</button>
+    <button type="button" class="stage-btn" data-stage="hsc" role="tab" aria-selected="false">Year 12 (HSC)</button>
+  </nav>
+
+  <section class="result-card" id="resultCard" aria-live="polite">
+    <!-- populated by JS -->
+  </section>
+
+  <section class="task-panel">
+    <div class="section-head">
+      <h2>Assessment tasks</h2>
+      <span class="hint">Example tasks shown — edit or clear to enter your own</span>
+    </div>
+
+    <div class="task-table-head">
+      <span>Task</span><span>Mark</span><span>Weight</span><span></span>
+    </div>
+
+    <div id="taskRows"></div>
+
+    <div class="totals-row">
+      <span class="totals-label">Total</span>
+      <span></span>
+      <span class="totals-val weight-total" id="weightTotal">0%</span>
+      <span></span>
+    </div>
+
+    <div class="table-actions">
+      <button type="button" class="link-btn" id="addRow">+ Add task</button>
+      <div style="display:flex; gap:8px;">
+        <button type="button" class="btn" id="clearAll">Clear all</button>
+        <button type="button" class="btn" id="printBtn">Print</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="plan-panel">
+    <div class="section-head">
+      <h2>Plan for a final result</h2>
+      <span class="hint">Optional</span>
+    </div>
+    <div class="plan-grid">
+      <div class="field">
+        <label for="goalGrade">Target overall grade</label>
+        <select id="goalGrade"></select>
+      </div>
+      <div class="field">
+        <label for="goalMark">Target overall mark</label>
+        <div class="pct-field"><input id="goalMark" type="number" min="0" max="100" step="1" value="75"></div>
+      </div>
+      <div class="field">
+        <label for="remainingWeight">Weight of remaining tasks <button type="button" class="auto-btn" id="remainingAutoBtn"></button></label>
+        <div class="pct-field"><input id="remainingWeight" type="number" min="0" max="100" step="1" value=""></div>
+        <span class="field-note">Auto: 100% minus the weight entered above — edit to override.</span>
+      </div>
+      <div class="field">
+        <label for="remainingOutOf">Out of how many marks</label>
+        <input id="remainingOutOf" type="number" min="1" step="1" placeholder="e.g. 60">
+        <span class="field-note">Optional — shows the raw mark you need, not just the percentage.</span>
+      </div>
+    </div>
+    <div class="plan-result" id="planResult"></div>
+  </section>
+
+  <footer class="note">
+    Grade codes and Years 1–10 / Year 11 descriptors follow NESA's Common Grade Scale; HSC band mark ranges (90–100 → Band 6, down to 0–49 → Band 1) are NESA's published ranges for standard courses. Outside the HSC, NESA grades are a holistic, standards-referenced teacher judgement, not a fixed percentage cut-off — the ranges here are an indicative study guide only. See <a href="https://curriculum.nsw.edu.au/assessment-and-reporting/reporting-and-using-grades" target="_blank" rel="noopener">curriculum.nsw.edu.au</a> and <a href="https://www.nsw.gov.au/education-and-training/nesa/hsc/facts-and-figures/performance-bands" target="_blank" rel="noopener">nsw.gov.au — HSC performance bands</a>.
+  </footer>
+
+</div>
+
+<script>
+(function(){
+
+  const STAGE_META = {
+    'y1-10': { label: 'Years 1–10 · Common Grade Scale', indicative: true },
+    'y11':   { label: 'Year 11 · Preliminary Common Grade Scale', indicative: true },
+    'hsc':   { label: 'Year 12 · HSC Performance Bands', indicative: false },
+  };
+
+  // Grade codes, names and descriptors — percentage thresholds are applied separately (see PCT_THRESHOLDS)
+  const GRADE_INFO = {
+    'y1-10': [
+      { code:'A', name:'Outstanding', desc:'The student’s work goes beyond the expected standard — deep understanding, applied confidently to new and more complex situations.' },
+      { code:'B', name:'High',        desc:'A thorough grasp of the content — almost everything is right, with only the deepest extensions out of reach.' },
+      { code:'C', name:'Sound',       desc:'The expected standard for the year level — solid understanding of the main concepts, applied consistently in familiar contexts.' },
+      { code:'D', name:'Basic',       desc:'Understands the basics but struggles with core parts of the work — real gaps remain.' },
+      { code:'E', name:'Elementary',  desc:'Very low or minimal comprehension of the syllabus outcomes — needs considerable support.' },
+    ],
+    'y11': [
+      { code:'A', name:'Outstanding', desc:'Extensive knowledge and highly developed skills — thinks critically and communicates complex ideas effectively.' },
+      { code:'B', name:'High',        desc:'Thorough knowledge and well-developed skills — analyses and evaluates, communicating complex ideas clearly.' },
+      { code:'C', name:'Sound',       desc:'Sound knowledge applied in familiar contexts — selects and communicates relevant ideas appropriately.' },
+      { code:'D', name:'Basic',       desc:'Basic knowledge in familiar contexts — communicates ideas in a descriptive way.' },
+      { code:'E', name:'Elementary',  desc:'Elementary knowledge — applies some skills with guidance and communicates ideas simply.' },
+    ],
+    'hsc': [
+      { code:'6', name:'Band 6', desc:'Outstanding achievement — a sophisticated understanding and highly developed skills across the course.' },
+      { code:'5', name:'Band 5', desc:'Thorough achievement — extensive knowledge, applied with high-level skills.' },
+      { code:'4', name:'Band 4', desc:'Sound achievement — solid understanding and skills applied competently.' },
+      { code:'3', name:'Band 3', desc:'Basic achievement — satisfactory understanding of the course’s main ideas.' },
+      { code:'2', name:'Band 2', desc:'Elementary achievement — limited understanding, meeting only minimum requirements.' },
+      { code:'1', name:'Band 1', desc:'Below the minimum standard expected for the course.' },
+    ]
+  };
+
+  // Indicative percentage cut-offs for the two A–E scales (NESA sets no official cut-off — grades are a holistic judgement)
+  const PCT_THRESHOLDS = {
+    even:   [90, 75, 50, 25, 0],
+    common: [85, 70, 50, 31, 0],
+  };
+  const PCT_NOTES = {
+    even:   'Splits the 0–100 range into even fifths.',
+    common: 'The split many NSW teachers use when converting marks to grades — note the 50% pass line, well below the ~65–70% baseline many US/international scales treat as a pass.',
+  };
+  const HSC_THRESHOLDS = [90, 80, 70, 60, 50, 0];
+
+  const SEED_TASKS = {
+    'y1-10': [ ['Assessment Task 1', 78, 15], ['Half-Yearly Exam', 65, 20], ['Assessment Task 3', 82, 15], ['Yearly Exam', 70, 20] ],
+    'y11':   [ ['Assessment Task 1', 78, 20], ['Assessment Task 2', 82, 20], ['Yearly Exam', 65, 30] ],
+    'hsc':   [ ['Assessment Task 1', 78, 20], ['Trial HSC Exam', 65, 30], ['Assessment Task 2', 82, 20] ],
+  };
+
+  let currentStage = 'y1-10';
+  let pctMode = 'common';
+  let rowId = 0;
+  let remainingManual = false;
+  let settingGoalFromDropdown = false;
+  let rowsAreDefault = true;
+
+  function reseedRows(stageKey){
+    rowsEl.innerHTML = '';
+    SEED_TASKS[stageKey].forEach(([name, mark, weight]) => addRow(name, mark, weight));
+  }
+
+  function getLevels(stageKey){
+    const thresholds = stageKey === 'hsc' ? HSC_THRESHOLDS : PCT_THRESHOLDS[pctMode];
+    return GRADE_INFO[stageKey].map((g, i) => ({ ...g, min: thresholds[i] }));
+  }
+
+  const rowsEl = document.getElementById('taskRows');
+  const resultCard = document.getElementById('resultCard');
+  const weightTotalEl = document.getElementById('weightTotal');
+  const planResultEl = document.getElementById('planResult');
+  const goalGradeSelect = document.getElementById('goalGrade');
+  const goalMarkInput = document.getElementById('goalMark');
+  const remainingWeightInput = document.getElementById('remainingWeight');
+  const remainingAutoBtn = document.getElementById('remainingAutoBtn');
+  const remainingOutOfInput = document.getElementById('remainingOutOf');
+
+  function populateGoalGradeOptions(){
+    const levels = getLevels(currentStage);
+    const isNumericCode = /^[0-9]+$/.test(levels[0].code);
+    const prevVal = goalGradeSelect.value;
+    goalGradeSelect.innerHTML = '<option value="">Custom mark…</option>' + levels.map(l =>
+      `<option value="${l.min}">${isNumericCode ? l.name : l.code + ' — ' + l.name} (≥ ${l.min}%)</option>`
+    ).join('');
+    if(Array.from(goalGradeSelect.options).some(o => o.value === prevVal)) goalGradeSelect.value = prevVal;
+  }
+
+  function updateRemainingAutoBtn(){
+    remainingAutoBtn.textContent = remainingManual ? '(use auto)' : '(auto)';
+    remainingAutoBtn.classList.toggle('is-manual', remainingManual);
+  }
+
+  function levelFor(stageKey, mark){
+    const levels = getLevels(stageKey);
+    const clamped = Math.max(0, Math.min(100, mark));
+    for(const lvl of levels){ if(clamped >= lvl.min) return lvl; }
+    return levels[levels.length-1];
+  }
+
+  function levelColor(stageKey, code){
+    const levels = getLevels(stageKey);
+    const idx = levels.findIndex(l => l.code === code);
+    const n = levels.length;
+    const rank = n - idx; // 1 = weakest, n = strongest
+    const map = { 5:['--band-1','--band-2','--band-3','--band-4','--band-5'],
+                  6:['--band-1','--band-2','--band-3','--band-4','--band-5','--band-6'] };
+    const varName = map[n][rank-1];
+    return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+  }
+
+  function addRow(name, mark, weight){
+    rowId++;
+    const row = document.createElement('div');
+    row.className = 'task-row';
+    row.dataset.id = rowId;
+    row.innerHTML = `
+      <input type="text" data-field="name" placeholder="Task name" value="${name ?? ''}">
+      <div class="pct-field" data-field="mark"><input type="number" data-field="mark" min="0" max="100" step="1" value="${mark ?? ''}" placeholder="0"></div>
+      <div class="pct-field" data-field="weight"><input type="number" data-field="weight" min="0" max="100" step="1" value="${weight ?? ''}" placeholder="0"></div>
+      <button type="button" class="row-remove" aria-label="Remove task">&times;</button>
+    `;
+    row.querySelector('.row-remove').addEventListener('click', () => { rowsAreDefault = false; row.remove(); update(); });
+    row.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => { rowsAreDefault = false; update(); }));
+    rowsEl.appendChild(row);
+  }
+
+  function getRows(){
+    return Array.from(rowsEl.querySelectorAll('.task-row')).map(row => {
+      const mark = parseFloat(row.querySelector('input[data-field="mark"]').value);
+      const weight = parseFloat(row.querySelector('input[data-field="weight"]').value);
+      const name = row.querySelector('input[data-field="name"]').value;
+      return { name, mark: isNaN(mark) ? null : mark, weight: isNaN(weight) ? null : weight };
+    });
+  }
+
+  function levelRanges(stageKey){
+    const levels = getLevels(stageKey);
+    return levels.map((l, i) => ({ ...l, max: i === 0 ? 100 : levels[i-1].min - 1 }));
+  }
+
+  function renderScaleLegend(stageKey){
+    const isBand = /^[0-9]+$/.test(getLevels(stageKey)[0].code);
+    return `<div class="scale-legend">${levelRanges(stageKey).map(l => `
+      <span class="legend-item"><span class="dot" style="background:${levelColor(stageKey, l.code)}"></span>${isBand ? 'Band ' + l.code : l.code} ${l.min}–${l.max}%</span>
+    `).join('')}</div>`;
+  }
+
+  function renderResult(avg, weightTotal){
+    const stage = STAGE_META[currentStage];
+    const hasData = weightTotal > 0;
+    const lvl = hasData ? levelFor(currentStage, avg) : null;
+    const color = hasData ? levelColor(currentStage, lvl.code) : null;
+
+    const topHtml = hasData ? `
+      <div class="result-badge" style="background:${color}">
+        <span class="code">${lvl.code}</span>
+        <span class="pct">${avg.toFixed(1)}%</span>
+      </div>
+      <div class="result-body">
+        <p class="grade-name">${lvl.name}</p>
+        <p class="grade-desc">${lvl.desc}</p>
+      </div>
+      <div class="result-meta">
+        <span>Weighted average: <strong>${avg.toFixed(1)}%</strong></span>
+        <span>Weight entered: <strong>${weightTotal.toFixed(0)}%</strong></span>
+        <span>Scale: <strong>${stage.label}</strong></span>
+      </div>
+    ` : `<p class="empty-state">Add a mark and a weight for at least one task to see your result. Meanwhile, here's the ${stage.label}:</p>`;
+
+    resultCard.innerHTML = topHtml + renderScaleLegend(currentStage) + (stage.indicative ? `
+        <div class="pct-toggle-row">
+          <span class="pct-toggle-label">Percentage guide</span>
+          <div class="pct-toggle" id="pctToggle">
+            <button type="button" data-mode="common" class="${pctMode==='common'?'active':''}">Common practice</button>
+            <button type="button" data-mode="even" class="${pctMode==='even'?'active':''}">Even fifths</button>
+          </div>
+        </div>
+        <p class="pct-note">${PCT_NOTES[pctMode]}</p>
+        <p class="caveat">NESA doesn't set an official percentage cut-off for this scale — grades are a holistic teacher judgement against the syllabus. The split above is a study guide only.</p>
+      ` : '');
+    if(stage.indicative){
+      document.querySelectorAll('#pctToggle button').forEach(btn => {
+        btn.addEventListener('click', () => { pctMode = btn.dataset.mode; update(); });
+      });
+    }
+  }
+
+  // weightedSum here is Σ(mark_i * weight_i), with weight_i expressed in percentage points (e.g. 20, not 0.2)
+  function renderPlan(weightedSum, weightTotal){
+    const goal = parseFloat(goalMarkInput.value);
+    const remaining = parseFloat(remainingWeightInput.value);
+    if(isNaN(goal)){
+      planResultEl.textContent = 'Enter a target mark or grade to see what you need.';
+      return;
+    }
+    if(isNaN(remaining) || remaining <= 0){
+      if(weightTotal >= 100){
+        const avg = weightedSum / weightTotal;
+        planResultEl.innerHTML = `All tasks are already entered (100% weight) — your final result is <strong>${avg.toFixed(1)}%</strong>.`;
+      } else {
+        planResultEl.textContent = 'Enter the weight of your remaining tasks to see what you need.';
+      }
+      return;
+    }
+    const needed = (goal * 100 - weightedSum) / remaining;
+    const stage = STAGE_META[currentStage];
+    const bestPossible = (weightedSum + remaining * 100) / (weightTotal + remaining);
+
+    const outOf = parseFloat(remainingOutOfInput.value);
+    const hasOutOf = !isNaN(outOf) && outOf > 0;
+    const marksFor = pct => Math.ceil(pct / 100 * outOf - 1e-9);
+
+    if(needed > 100){
+      const outOfNote = hasOutOf ? ` — the best you could get is <strong>${outOf} out of ${outOf}</strong> marks` : '';
+      planResultEl.innerHTML = `Even full marks (100%) on the remaining ${remaining}% won't reach ${goal}% overall — the best possible result is <strong>${bestPossible.toFixed(1)}%</strong>${outOfNote}.`;
+      return;
+    }
+    if(needed <= 0){
+      planResultEl.innerHTML = `Already secured — your current results guarantee at least <strong>${goal}%</strong> overall regardless of what's left.`;
+      return;
+    }
+    const lvl = levelFor(currentStage, needed);
+    const color = levelColor(currentStage, lvl.code);
+    const marksNote = hasOutOf ? ` (at least <strong>${marksFor(needed)} out of ${outOf}</strong> marks)` : '';
+    planResultEl.innerHTML = `To reach <strong>${goal}%</strong> overall, average <strong>${needed.toFixed(1)}%</strong> on the remaining ${remaining}% of tasks${marksNote} — that's about a <span class="chip" style="background:${color}">${lvl.code}</span> ${lvl.name}${stage.indicative ? ' equivalent' : ''}.`;
+  }
+
+  function update(){
+    const rows = getRows();
+    let weightedSum = 0, weightTotal = 0;
+    rows.forEach(r => {
+      if(r.mark !== null && r.weight !== null){
+        weightedSum += r.mark * r.weight;
+        weightTotal += r.weight;
+      }
+    });
+    weightTotalEl.textContent = weightTotal.toFixed(0) + '%';
+    renderResult(weightTotal > 0 ? weightedSum / weightTotal : 0, weightTotal);
+    populateGoalGradeOptions();
+    if(!remainingManual){
+      remainingWeightInput.value = Math.max(0, Math.round((100 - weightTotal) * 10) / 10);
+    }
+    updateRemainingAutoBtn();
+    renderPlan(weightedSum, weightTotal);
+  }
+
+  function setStage(stageKey){
+    currentStage = stageKey;
+    document.querySelectorAll('.stage-btn').forEach(btn => {
+      const active = btn.dataset.stage === stageKey;
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    if(rowsAreDefault) reseedRows(stageKey);
+    update();
+  }
+
+  document.querySelectorAll('.stage-btn').forEach(btn => {
+    btn.addEventListener('click', () => setStage(btn.dataset.stage));
+  });
+
+  document.getElementById('addRow').addEventListener('click', () => { rowsAreDefault = false; addRow('', '', ''); update(); });
+  document.getElementById('clearAll').addEventListener('click', () => { rowsAreDefault = false; rowsEl.innerHTML=''; addRow('','',''); update(); });
+  document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+  goalGradeSelect.addEventListener('change', () => {
+    if(goalGradeSelect.value === '') return;
+    settingGoalFromDropdown = true;
+    goalMarkInput.value = goalGradeSelect.value;
+    update();
+    settingGoalFromDropdown = false;
+  });
+  goalMarkInput.addEventListener('input', () => {
+    if(!settingGoalFromDropdown) goalGradeSelect.value = '';
+    update();
+  });
+  remainingWeightInput.addEventListener('input', () => { remainingManual = true; update(); });
+  remainingAutoBtn.addEventListener('click', () => {
+    if(!remainingManual) return;
+    remainingManual = false;
+    update();
+  });
+  remainingOutOfInput.addEventListener('input', update);
+
+  // seed with example data
+  reseedRows(currentStage);
+  update();
+
+})();
+</script>
