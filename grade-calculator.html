@@ -936,7 +936,9 @@
     const lvl = levelFor(currentStage, needed);
     const color = levelColor(currentStage, lvl.code);
     const marksNote = hasOutOf ? ` (at least <strong>${marksFor(needed)} out of ${outOf}</strong> marks)` : '';
-    planResultEl.innerHTML = `To reach <strong>${goal}%</strong> overall, average <strong>${needed.toFixed(1)}%</strong> on the remaining ${remaining}% of tasks${marksNote} — that's about a <span class="chip" style="background:${color}">${lvl.code}</span> ${lvl.name}${stage.indicative ? ' equivalent' : ''}.`;
+    const chip = `<span class="chip" style="background:${color}">${lvl.code}</span>`;
+    const gradePhrase = stage.indicative ? `a ${chip} ${lvl.name} equivalent` : `Band ${chip}`;
+    planResultEl.innerHTML = `To reach <strong>${goal}%</strong> overall, average <strong>${needed.toFixed(1)}%</strong> on the remaining ${remaining}% of tasks${marksNote} — that's about ${gradePhrase}.`;
   }
 
   const STATE_KEY = 'nswGradeCalcState';
