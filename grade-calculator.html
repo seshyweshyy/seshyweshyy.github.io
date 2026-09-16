@@ -131,6 +131,7 @@
     line-height:1.5;
     white-space:nowrap;
   }
+  .letterhead .badge-nesa .short{ display:none; }
   .theme-toggle{
     position:absolute;
     top:0;
@@ -562,6 +563,9 @@
     .stage-select button{ flex-basis:0; padding:10px 6px; font-size:0.82rem; }
     .stage-select .full{ display:none; }
     .stage-select .short{ display:inline; }
+    .letterhead .badge-nesa{ font-size:0.66rem; }
+    .letterhead .badge-nesa .full{ display:none; }
+    .letterhead .badge-nesa .short{ display:inline; }
   }
   @media (max-width:620px){
     .result-card{ grid-template-columns:1fr; text-align:left; }
@@ -606,7 +610,10 @@
       <h1>NSW Grade Calculator</h1>
       <p class="sub">Work out a weighted overall result and see it against the actual scale your report card uses — the K–10 Common Grade Scale, the Year 11 Preliminary scale, or HSC performance bands.</p>
     </div>
-    <div class="badge-nesa">Common Grade Scale &amp; HSC<br>Performance Bands</div>
+    <div class="badge-nesa">
+      <span class="full">Common Grade Scale &amp; HSC<br>Performance Bands</span>
+      <span class="short">Common Grade Scale &amp; HSC Bands</span>
+    </div>
     <button type="button" class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" title="Switch theme"></button>
   </header>
 
