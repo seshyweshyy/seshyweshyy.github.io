@@ -388,6 +388,30 @@
     gap:10px;
     align-items:center;
   }
+  .task-panel.frac-active .task-table-head,
+  .task-panel.frac-active .task-row{
+    grid-template-columns: 1fr 150px 100px 34px;
+  }
+  .mark-mode-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .pct-field .frac-pct{
+    display:none;
+    position:absolute;
+    right:10px;
+    top:50%;
+    transform:translateY(-50%);
+    font-size:0.7rem;
+    color:var(--ink-faint);
+    pointer-events:none;
+    white-space:nowrap;
+  }
+  .pct-field.frac-mode::after{ content:none; }
+  .pct-field.frac-mode .frac-pct{ display:block; }
+  .pct-field.frac-mode input{ padding-right:52px; text-align:left; }
   .task-row input{
     width:100%;
     font-family:'Public Sans',sans-serif;
@@ -594,6 +618,7 @@
     .task-row .pct-field[data-field="mark"]::before{ content:'Mark'; }
     .task-row .pct-field[data-field="weight"]::before{ content:'Weight'; }
     .task-row .pct-field::after{ top:auto; bottom:9px; transform:none; }
+    .task-row .pct-field.frac-mode .frac-pct{ top:auto; bottom:9px; transform:none; }
     .totals-row{ grid-template-columns:1fr 34px; }
     .totals-row .weight-total{ grid-column:2/3; text-align:right; }
     .plan-grid{ grid-template-columns:1fr; }
@@ -627,10 +652,18 @@
     <!-- populated by JS -->
   </section>
 
-  <section class="task-panel">
+  <section class="task-panel" id="taskPanel">
     <div class="section-head">
       <h2>Assessment tasks</h2>
       <span class="hint">Example tasks shown — edit or clear to enter your own</span>
+    </div>
+
+    <div class="mark-mode-row">
+      <span class="pct-toggle-label">Enter marks as</span>
+      <div class="pct-toggle" id="markModeToggle">
+        <button type="button" data-mode="pct" class="active">Percentage</button>
+        <button type="button" data-mode="fraction">Fraction (score/total)</button>
+      </div>
     </div>
 
     <div class="task-table-head">
@@ -764,6 +797,7 @@
 
   let currentStage = 'y1-10';
   let pctMode = 'common';
+  let markMode = 'pct';
   let rowId = 0;
   let remainingManual = false;
   let settingGoalFromDropdown = false;
@@ -780,6 +814,7 @@
   }
 
   const rowsEl = document.getElementById('taskRows');
+  const taskPanelEl = document.getElementById('taskPanel');
   const resultCard = document.getElementById('resultCard');
   const weightTotalEl = document.getElementById('weightTotal');
   const planResultEl = document.getElementById('planResult');
@@ -822,14 +857,95 @@
     return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
   }
 
+  function trimNum(v){ return +(v.toFixed(1)); }
+
+  function parseFractionToPct(raw){
+    const m = /^\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s*$/.exec(raw || '');
+    if(!m) return null;
+    const score = parseFloat(m[1]), total = parseFloat(m[2]);
+    if(!total) return null;
+    return score / total * 100;
+  }
+
+  function parseMarkInput(raw){
+    if(markMode === 'fraction') return parseFractionToPct(raw);
+    const v = parseFloat(raw);
+    return isNaN(v) ? null : v;
+  }
+
+  // mark can be: null/undefined/'' (empty), a plain percent number (from seed data), or an
+  // already-formatted string (a fraction like "38/60", or a saved percent string)
+  function formatMarkValue(mark){
+    if(markMode === 'fraction'){
+      if(mark === null || mark === undefined || mark === '') return '/';
+      if(typeof mark === 'number') return `${trimNum(mark)}/100`;
+      return String(mark);
+    }
+    if(mark === null || mark === undefined) return '';
+    return typeof mark === 'number' ? String(trimNum(mark)) : String(mark);
+  }
+
+  function refreshFracIndicators(){
+    document.querySelectorAll('.pct-field[data-field="mark"].frac-mode').forEach(wrapper => {
+      const input = wrapper.querySelector('input[data-field="mark"]');
+      const span = wrapper.querySelector('.frac-pct');
+      const pct = parseFractionToPct(input.value);
+      span.textContent = pct !== null ? `${trimNum(pct)}%` : '';
+    });
+  }
+
+  function updateMarkModeToggleUI(){
+    document.querySelectorAll('#markModeToggle button').forEach(b => b.classList.toggle('active', b.dataset.mode === markMode));
+    taskPanelEl.classList.toggle('frac-active', markMode === 'fraction');
+  }
+
+  function setMarkMode(newMode){
+    if(newMode === markMode) return;
+    const oldMode = markMode;
+    const conversions = Array.from(rowsEl.querySelectorAll('.task-row')).map(row => {
+      const input = row.querySelector('input[data-field="mark"]');
+      const raw = input.value;
+      const pct = oldMode === 'fraction' ? parseFractionToPct(raw) : (isNaN(parseFloat(raw)) ? null : parseFloat(raw));
+      const hadValue = raw.trim() !== '' && raw.trim() !== '/';
+      return { row, pct: hadValue ? pct : null };
+    });
+    markMode = newMode;
+    conversions.forEach(({ row, pct }) => {
+      const wrapper = row.querySelector('.pct-field[data-field="mark"]');
+      const input = wrapper.querySelector('input[data-field="mark"]');
+      wrapper.classList.toggle('frac-mode', markMode === 'fraction');
+      if(markMode === 'fraction'){
+        input.type = 'text';
+        input.setAttribute('inputmode', 'decimal');
+        input.placeholder = '/';
+        input.value = pct !== null ? `${trimNum(pct)}/100` : '/';
+      } else {
+        input.type = 'number';
+        input.setAttribute('min', '0'); input.setAttribute('max', '100'); input.setAttribute('step', '1');
+        input.removeAttribute('inputmode');
+        input.placeholder = '0';
+        input.value = pct !== null ? trimNum(pct) : '';
+      }
+    });
+    updateMarkModeToggleUI();
+    update();
+  }
+
   function addRow(name, mark, weight){
     rowId++;
     const row = document.createElement('div');
     row.className = 'task-row';
     row.dataset.id = rowId;
+    const isFrac = markMode === 'fraction';
+    const markType = isFrac ? 'text' : 'number';
+    const markExtra = isFrac ? 'inputmode="decimal"' : 'min="0" max="100" step="1"';
+    const markPlaceholder = isFrac ? '/' : '0';
     row.innerHTML = `
       <input type="text" data-field="name" placeholder="Task name" value="${name ?? ''}">
-      <div class="pct-field" data-field="mark"><input type="number" data-field="mark" min="0" max="100" step="1" value="${mark ?? ''}" placeholder="0"></div>
+      <div class="pct-field${isFrac ? ' frac-mode' : ''}" data-field="mark">
+        <input type="${markType}" data-field="mark" ${markExtra} value="${formatMarkValue(mark)}" placeholder="${markPlaceholder}">
+        <span class="frac-pct"></span>
+      </div>
       <div class="pct-field" data-field="weight"><input type="number" data-field="weight" min="0" max="100" step="1" value="${weight ?? ''}" placeholder="0"></div>
       <button type="button" class="row-remove" aria-label="Remove task">&times;</button>
     `;
@@ -840,10 +956,10 @@
 
   function getRows(){
     return Array.from(rowsEl.querySelectorAll('.task-row')).map(row => {
-      const mark = parseFloat(row.querySelector('input[data-field="mark"]').value);
+      const mark = parseMarkInput(row.querySelector('input[data-field="mark"]').value);
       const weight = parseFloat(row.querySelector('input[data-field="weight"]').value);
       const name = row.querySelector('input[data-field="name"]').value;
-      return { name, mark: isNaN(mark) ? null : mark, weight: isNaN(weight) ? null : weight };
+      return { name, mark, weight: isNaN(weight) ? null : weight };
     });
   }
 
@@ -954,6 +1070,7 @@
         v: 1,
         stage: currentStage,
         pctMode,
+        markMode,
         rowsAreDefault,
         remainingManual,
         rows,
@@ -992,6 +1109,7 @@
     }
     updateRemainingAutoBtn();
     renderPlan(weightedSum, weightTotal);
+    refreshFracIndicators();
     saveState();
   }
 
@@ -1037,14 +1155,20 @@
   });
   remainingOutOfInput.addEventListener('input', update);
 
+  document.querySelectorAll('#markModeToggle button').forEach(btn => {
+    btn.addEventListener('click', () => setMarkMode(btn.dataset.mode));
+  });
+
   // restore saved state, or seed with example data
   const saved = loadState();
   if(saved && Array.isArray(saved.rows) && saved.rows.length){
     currentStage = STAGE_META[saved.stage] ? saved.stage : 'y1-10';
     pctMode = PCT_THRESHOLDS[saved.pctMode] ? saved.pctMode : 'common';
+    markMode = saved.markMode === 'fraction' ? 'fraction' : 'pct';
     rowsAreDefault = !!saved.rowsAreDefault;
     remainingManual = !!saved.remainingManual;
     setActiveTabUI(currentStage);
+    updateMarkModeToggleUI();
     saved.rows.forEach(r => addRow(r.name, r.mark, r.weight));
     if(typeof saved.goalMark === 'string' && saved.goalMark !== '') goalMarkInput.value = saved.goalMark;
     if(remainingManual && typeof saved.remainingWeight === 'string') remainingWeightInput.value = saved.remainingWeight;
