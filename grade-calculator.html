@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NSW Grade Calculator</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTUiIGZpbGw9IiM5QzJCMjIiLz48dGV4dCB4PSIzMiIgeT0iNDYiIGZvbnQtZmFtaWx5PSJHZW9yZ2lhLCBUaW1lcyBOZXcgUm9tYW4sIHNlcmlmIiBmb250LXNpemU9IjM4IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjRkZGRkZGIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5BPC90ZXh0Pjwvc3ZnPg==">
+<script>
+  (function(){
+    try{
+      var saved = localStorage.getItem('nswGradeCalcTheme');
+      if(saved === 'light' || saved === 'dark') document.documentElement.setAttribute('data-theme', saved);
+    }catch(e){}
+  })();
+</script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&display=swap');
 
@@ -121,6 +130,29 @@
     line-height:1.5;
     white-space:nowrap;
   }
+  .letterhead-side{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:10px;
+  }
+  .theme-toggle{
+    width:34px;
+    height:34px;
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    border:1px solid var(--border);
+    background:var(--surface-alt);
+    color:var(--ink-muted);
+    cursor:pointer;
+    transition:border-color .15s ease, color .15s ease;
+  }
+  .theme-toggle:hover{ border-color:var(--accent); color:var(--accent); }
+  .theme-toggle:focus-visible{ outline:none; box-shadow:var(--focus-ring); }
+  .theme-toggle svg{ width:18px; height:18px; }
 
   /* ---------- Stage selector ---------- */
   .stage-select{
@@ -510,7 +542,9 @@
     color:#fff;
     font-weight:700;
     font-size:0.85em;
-    vertical-align:-2px;
+    vertical-align:middle;
+    position:relative;
+    top:-0.1em;
   }
 
   footer.note{
@@ -574,7 +608,10 @@
       <h1>NSW Grade Calculator</h1>
       <p class="sub">Work out a weighted overall result and see it against the actual scale your report card uses — the K–10 Common Grade Scale, the Year 11 Preliminary scale, or HSC performance bands.</p>
     </div>
-    <div class="badge-nesa">Common Grade Scale &amp; HSC<br>Performance Bands</div>
+    <div class="letterhead-side">
+      <button type="button" class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" title="Switch theme"></button>
+      <div class="badge-nesa">Common Grade Scale &amp; HSC<br>Performance Bands</div>
+    </div>
   </header>
 
   <nav class="stage-select" role="tablist" aria-label="Reporting stage">
@@ -651,6 +688,27 @@
 
 <script>
 (function(){
+
+  const THEME_KEY = 'nswGradeCalcTheme';
+  const themeToggleBtn = document.getElementById('themeToggle');
+  const SUN_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+  const MOON_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+
+  function effectiveTheme(){
+    const attr = document.documentElement.getAttribute('data-theme');
+    if(attr === 'light' || attr === 'dark') return attr;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  function renderThemeIcon(){
+    themeToggleBtn.innerHTML = effectiveTheme() === 'dark' ? SUN_ICON : MOON_ICON;
+  }
+  themeToggleBtn.addEventListener('click', () => {
+    const next = effectiveTheme() === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem(THEME_KEY, next); }catch(e){}
+    renderThemeIcon();
+  });
+  renderThemeIcon();
 
   const STAGE_META = {
     'y1-10': { label: 'Years 1–10 · Common Grade Scale', indicative: true },
@@ -878,6 +936,40 @@
     planResultEl.innerHTML = `To reach <strong>${goal}%</strong> overall, average <strong>${needed.toFixed(1)}%</strong> on the remaining ${remaining}% of tasks${marksNote} — that's about a <span class="chip" style="background:${color}">${lvl.code}</span> ${lvl.name}${stage.indicative ? ' equivalent' : ''}.`;
   }
 
+  const STATE_KEY = 'nswGradeCalcState';
+
+  function saveState(){
+    try{
+      const rows = Array.from(rowsEl.querySelectorAll('.task-row')).map(row => ({
+        name: row.querySelector('input[data-field="name"]').value,
+        mark: row.querySelector('input[data-field="mark"]').value,
+        weight: row.querySelector('input[data-field="weight"]').value,
+      }));
+      localStorage.setItem(STATE_KEY, JSON.stringify({
+        v: 1,
+        stage: currentStage,
+        pctMode,
+        rowsAreDefault,
+        remainingManual,
+        rows,
+        goalMark: goalMarkInput.value,
+        goalGrade: goalGradeSelect.value,
+        remainingWeight: remainingWeightInput.value,
+        remainingOutOf: remainingOutOfInput.value,
+      }));
+    }catch(e){}
+  }
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STATE_KEY);
+      if(!raw) return null;
+      const state = JSON.parse(raw);
+      if(!state || typeof state !== 'object') return null;
+      return state;
+    }catch(e){ return null; }
+  }
+
   function update(){
     const rows = getRows();
     let weightedSum = 0, weightTotal = 0;
@@ -895,15 +987,20 @@
     }
     updateRemainingAutoBtn();
     renderPlan(weightedSum, weightTotal);
+    saveState();
   }
 
-  function setStage(stageKey){
-    currentStage = stageKey;
+  function setActiveTabUI(stageKey){
     document.querySelectorAll('.stage-btn').forEach(btn => {
       const active = btn.dataset.stage === stageKey;
       btn.classList.toggle('active', active);
       btn.setAttribute('aria-selected', active ? 'true' : 'false');
     });
+  }
+
+  function setStage(stageKey){
+    currentStage = stageKey;
+    setActiveTabUI(stageKey);
     if(rowsAreDefault) reseedRows(stageKey);
     update();
   }
@@ -935,9 +1032,26 @@
   });
   remainingOutOfInput.addEventListener('input', update);
 
-  // seed with example data
-  reseedRows(currentStage);
-  update();
+  // restore saved state, or seed with example data
+  const saved = loadState();
+  if(saved && Array.isArray(saved.rows) && saved.rows.length){
+    currentStage = STAGE_META[saved.stage] ? saved.stage : 'y1-10';
+    pctMode = PCT_THRESHOLDS[saved.pctMode] ? saved.pctMode : 'common';
+    rowsAreDefault = !!saved.rowsAreDefault;
+    remainingManual = !!saved.remainingManual;
+    setActiveTabUI(currentStage);
+    saved.rows.forEach(r => addRow(r.name, r.mark, r.weight));
+    if(typeof saved.goalMark === 'string' && saved.goalMark !== '') goalMarkInput.value = saved.goalMark;
+    if(remainingManual && typeof saved.remainingWeight === 'string') remainingWeightInput.value = saved.remainingWeight;
+    if(typeof saved.remainingOutOf === 'string') remainingOutOfInput.value = saved.remainingOutOf;
+    update();
+    if(typeof saved.goalGrade === 'string' && Array.from(goalGradeSelect.options).some(o => o.value === saved.goalGrade)){
+      goalGradeSelect.value = saved.goalGrade;
+    }
+  } else {
+    reseedRows(currentStage);
+    update();
+  }
 
 })();
 </script>
