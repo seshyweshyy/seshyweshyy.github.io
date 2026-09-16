@@ -89,11 +89,12 @@
 
   /* ---------- Letterhead ---------- */
   .letterhead{
+    position:relative;
     display:flex;
     align-items:flex-end;
     justify-content:space-between;
     gap:16px;
-    padding-bottom:18px;
+    padding:0 46px 18px 0;
     border-bottom:3px solid var(--accent);
     flex-wrap:wrap;
   }
@@ -130,13 +131,10 @@
     line-height:1.5;
     white-space:nowrap;
   }
-  .letterhead-side{
-    display:flex;
-    flex-direction:column;
-    align-items:flex-end;
-    gap:10px;
-  }
   .theme-toggle{
+    position:absolute;
+    top:0;
+    right:0;
     width:34px;
     height:34px;
     flex-shrink:0;
@@ -608,14 +606,12 @@
       <h1>NSW Grade Calculator</h1>
       <p class="sub">Work out a weighted overall result and see it against the actual scale your report card uses — the K–10 Common Grade Scale, the Year 11 Preliminary scale, or HSC performance bands.</p>
     </div>
-    <div class="letterhead-side">
-      <button type="button" class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" title="Switch theme"></button>
-      <div class="badge-nesa">Common Grade Scale &amp; HSC<br>Performance Bands</div>
-    </div>
+    <div class="badge-nesa">Common Grade Scale &amp; HSC<br>Performance Bands</div>
+    <button type="button" class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" title="Switch theme"></button>
   </header>
 
   <nav class="stage-select" role="tablist" aria-label="Reporting stage">
-    <button type="button" class="stage-btn active" data-stage="y1-10" role="tab" aria-selected="true"><span class="full">Years 1–10</span><span class="short">1–10</span></button>
+    <button type="button" class="stage-btn active" data-stage="y1-10" role="tab" aria-selected="true"><span class="full">Years 1–10</span><span class="short">Y1–10</span></button>
     <button type="button" class="stage-btn" data-stage="y11" role="tab" aria-selected="false"><span class="full">Year 11 (Preliminary)</span><span class="short">Year 11</span></button>
     <button type="button" class="stage-btn" data-stage="hsc" role="tab" aria-selected="false"><span class="full">Year 12 (HSC)</span><span class="short">HSC</span></button>
   </nav>
