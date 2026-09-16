@@ -801,11 +801,26 @@
   let rowId = 0;
   let remainingManual = false;
   let settingGoalFromDropdown = false;
-  let rowsAreDefault = true;
 
-  function reseedRows(stageKey){
+  // Each stage (Years 1-10 / Year 11 / HSC) keeps its own independent list of task rows,
+  // so editing marks on one tab never bleeds into another tab's tasks.
+  let stageRows = { 'y1-10': [], 'y11': [], 'hsc': [] };
+
+  function defaultStageRows(stageKey){
+    return SEED_TASKS[stageKey].map(([name, mark, weight]) => ({ name, mark: formatMarkValue(mark), weight: String(weight) }));
+  }
+
+  function captureCurrentRows(){
+    return Array.from(rowsEl.querySelectorAll('.task-row')).map(row => ({
+      name: row.querySelector('input[data-field="name"]').value,
+      mark: row.querySelector('input[data-field="mark"]').value,
+      weight: row.querySelector('input[data-field="weight"]').value,
+    }));
+  }
+
+  function renderRows(rows){
     rowsEl.innerHTML = '';
-    SEED_TASKS[stageKey].forEach(([name, mark, weight]) => addRow(name, mark, weight));
+    rows.forEach(r => addRow(r.name, r.mark, r.weight));
   }
 
   function getLevels(stageKey){
@@ -899,34 +914,23 @@
     taskPanelEl.classList.toggle('frac-active', markMode === 'fraction');
   }
 
+  function convertMarkRaw(raw, oldMode, newMode){
+    const hadValue = (raw || '').trim() !== '' && raw.trim() !== '/';
+    if(!hadValue) return newMode === 'fraction' ? '/' : '';
+    const pct = oldMode === 'fraction' ? parseFractionToPct(raw) : (isNaN(parseFloat(raw)) ? null : parseFloat(raw));
+    if(pct === null) return newMode === 'fraction' ? '/' : '';
+    return newMode === 'fraction' ? `${trimNum(pct)}/100` : String(trimNum(pct));
+  }
+
   function setMarkMode(newMode){
     if(newMode === markMode) return;
     const oldMode = markMode;
-    const conversions = Array.from(rowsEl.querySelectorAll('.task-row')).map(row => {
-      const input = row.querySelector('input[data-field="mark"]');
-      const raw = input.value;
-      const pct = oldMode === 'fraction' ? parseFractionToPct(raw) : (isNaN(parseFloat(raw)) ? null : parseFloat(raw));
-      const hadValue = raw.trim() !== '' && raw.trim() !== '/';
-      return { row, pct: hadValue ? pct : null };
-    });
+    stageRows[currentStage] = captureCurrentRows();
     markMode = newMode;
-    conversions.forEach(({ row, pct }) => {
-      const wrapper = row.querySelector('.pct-field[data-field="mark"]');
-      const input = wrapper.querySelector('input[data-field="mark"]');
-      wrapper.classList.toggle('frac-mode', markMode === 'fraction');
-      if(markMode === 'fraction'){
-        input.type = 'text';
-        input.setAttribute('inputmode', 'decimal');
-        input.placeholder = '/';
-        input.value = pct !== null ? `${trimNum(pct)}/100` : '/';
-      } else {
-        input.type = 'number';
-        input.setAttribute('min', '0'); input.setAttribute('max', '100'); input.setAttribute('step', '1');
-        input.removeAttribute('inputmode');
-        input.placeholder = '0';
-        input.value = pct !== null ? trimNum(pct) : '';
-      }
+    Object.keys(stageRows).forEach(stage => {
+      stageRows[stage] = stageRows[stage].map(r => ({ ...r, mark: convertMarkRaw(r.mark, oldMode, newMode) }));
     });
+    renderRows(stageRows[currentStage]);
     updateMarkModeToggleUI();
     update();
   }
@@ -949,8 +953,8 @@
       <div class="pct-field" data-field="weight"><input type="number" data-field="weight" min="0" max="100" step="1" value="${weight ?? ''}" placeholder="0"></div>
       <button type="button" class="row-remove" aria-label="Remove task">&times;</button>
     `;
-    row.querySelector('.row-remove').addEventListener('click', () => { rowsAreDefault = false; row.remove(); update(); });
-    row.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => { rowsAreDefault = false; update(); }));
+    row.querySelector('.row-remove').addEventListener('click', () => { row.remove(); update(); });
+    row.querySelectorAll('input').forEach(inp => inp.addEventListener('input', update));
     rowsEl.appendChild(row);
   }
 
@@ -1061,19 +1065,14 @@
 
   function saveState(){
     try{
-      const rows = Array.from(rowsEl.querySelectorAll('.task-row')).map(row => ({
-        name: row.querySelector('input[data-field="name"]').value,
-        mark: row.querySelector('input[data-field="mark"]').value,
-        weight: row.querySelector('input[data-field="weight"]').value,
-      }));
+      stageRows[currentStage] = captureCurrentRows();
       localStorage.setItem(STATE_KEY, JSON.stringify({
-        v: 1,
+        v: 2,
         stage: currentStage,
         pctMode,
         markMode,
-        rowsAreDefault,
         remainingManual,
-        rows,
+        stageRows,
         goalMark: goalMarkInput.value,
         goalGrade: goalGradeSelect.value,
         remainingWeight: remainingWeightInput.value,
@@ -1122,9 +1121,11 @@
   }
 
   function setStage(stageKey){
+    if(stageKey === currentStage) return;
+    stageRows[currentStage] = captureCurrentRows();
     currentStage = stageKey;
     setActiveTabUI(stageKey);
-    if(rowsAreDefault) reseedRows(stageKey);
+    renderRows(stageRows[currentStage]);
     update();
   }
 
@@ -1132,8 +1133,8 @@
     btn.addEventListener('click', () => setStage(btn.dataset.stage));
   });
 
-  document.getElementById('addRow').addEventListener('click', () => { rowsAreDefault = false; addRow('', '', ''); update(); });
-  document.getElementById('clearAll').addEventListener('click', () => { rowsAreDefault = false; rowsEl.innerHTML=''; addRow('','',''); update(); });
+  document.getElementById('addRow').addEventListener('click', () => { addRow('', '', ''); update(); });
+  document.getElementById('clearAll').addEventListener('click', () => { rowsEl.innerHTML=''; addRow('','',''); update(); });
   document.getElementById('printBtn').addEventListener('click', () => window.print());
 
   goalGradeSelect.addEventListener('change', () => {
@@ -1161,15 +1162,18 @@
 
   // restore saved state, or seed with example data
   const saved = loadState();
-  if(saved && Array.isArray(saved.rows) && saved.rows.length){
+  if(saved && saved.stageRows && typeof saved.stageRows === 'object'){
     currentStage = STAGE_META[saved.stage] ? saved.stage : 'y1-10';
     pctMode = PCT_THRESHOLDS[saved.pctMode] ? saved.pctMode : 'common';
     markMode = saved.markMode === 'fraction' ? 'fraction' : 'pct';
-    rowsAreDefault = !!saved.rowsAreDefault;
     remainingManual = !!saved.remainingManual;
+    Object.keys(stageRows).forEach(stage => {
+      const rows = saved.stageRows[stage];
+      stageRows[stage] = (Array.isArray(rows) && rows.length) ? rows : defaultStageRows(stage);
+    });
     setActiveTabUI(currentStage);
     updateMarkModeToggleUI();
-    saved.rows.forEach(r => addRow(r.name, r.mark, r.weight));
+    renderRows(stageRows[currentStage]);
     if(typeof saved.goalMark === 'string' && saved.goalMark !== '') goalMarkInput.value = saved.goalMark;
     if(remainingManual && typeof saved.remainingWeight === 'string') remainingWeightInput.value = saved.remainingWeight;
     if(typeof saved.remainingOutOf === 'string') remainingOutOfInput.value = saved.remainingOutOf;
@@ -1178,7 +1182,8 @@
       goalGradeSelect.value = saved.goalGrade;
     }
   } else {
-    reseedRows(currentStage);
+    Object.keys(stageRows).forEach(stage => { stageRows[stage] = defaultStageRows(stage); });
+    renderRows(stageRows[currentStage]);
     update();
   }
 
